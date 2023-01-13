@@ -1,0 +1,96 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'org.sonarqube' version '3.3'
+    id 'maven-publish'
+    id 'io.freefair.lombok' version '6.6.1'
+}
+
+group = 'com.iexec.commons'
+
+ext {
+    gitBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+}
+
+if (gitBranch != 'main' && gitBranch != 'master' && ! (gitBranch ==~ '(release|hotfix|support)/.*')) {
+    version += '-NEXT-SNAPSHOT'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "https://docker-regis-adm.iex.ec/repository/maven-public/"
+        credentials {
+            username nexusUser
+            password nexusPassword
+        }
+    }
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+// java-library plugin defines 'api' configuration
+// 'api' configuration allows to expose dependencies with 'compile' scope in pom
+// 'implementation' configuration allows to expose dependencies with 'runtime' scope in pom
+dependencies {
+    implementation platform("org.springframework.boot:spring-boot-dependencies:2.6.14")
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += '-Xlint:all'
+}
+
+tasks.withType(Test).configureEach {
+    finalizedBy jacocoTestReport
+    useJUnitPlatform()
+}
+
+test {
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+}
+
+task itest {
+    group 'Verification'
+    description 'Runs the integration tests.'
+}
+
+jacoco {
+    toolVersion = "0.8.7"
+}
+// sonarqube code coverage requires jacoco XML report
+jacocoTestReport {
+    reports {
+        xml.required = true
+    }
+}
+tasks.sonarqube.dependsOn tasks.jacocoTestReport
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username nexusUser
+                password nexusPassword
+            }
+            url = project.hasProperty('nexusUrl') ? nexusUrl : ''
+        }
+    }
+}
