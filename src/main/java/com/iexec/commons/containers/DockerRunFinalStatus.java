@@ -15,10 +15,8 @@
  */
 package com.iexec.commons.containers;
 
-public class Library {
-
-    public boolean someLibraryMethod() {
-        return true;
-    }
-    
+public enum DockerRunFinalStatus {
+    FAILED,
+    TIMEOUT,
+    SUCCESS
 }

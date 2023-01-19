@@ -17,14 +17,13 @@ package com.iexec.commons.containers;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class LibraryTest {
+class DockerRunFinalStatusTests {
 
     @Test
-    void someLibraryMethodReturnsTrue() {
-        Library classUnderTest = new Library();
-        assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'");
+    void shouldHaveThreePossibleStatuses() {
+        assertEquals(3, DockerRunFinalStatus.values().length);
     }
 
 }
