@@ -25,3 +25,4 @@ hs_err_pid*
 # Project specific exclusions
 .gradle
 build
+!gradle/wrapper/gradle-wrapper.jar
