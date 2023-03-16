@@ -1,0 +1,7 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [[1.0.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.0) 2023-03-16
+
+* Migrate docker package of `iexec-common` library to this `iexec-commons-containers` library. (#1 #2 #3)
