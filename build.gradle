@@ -22,7 +22,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven {
-        url "https://docker-regis-adm.iex.ec/repository/maven-public/"
+        url 'https://docker-regis-adm.iex.ec/repository/maven-public/'
         credentials {
             username nexusUser
             password nexusPassword
@@ -37,10 +37,10 @@ repositories {
 // 'api' configuration allows to expose dependencies with 'compile' scope in pom
 // 'implementation' configuration allows to expose dependencies with 'runtime' scope in pom
 dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:2.6.14')
+
     // iexec
     implementation "com.iexec.common:iexec-common:$iexecCommonVersion"
-
-    implementation platform("org.springframework.boot:spring-boot-dependencies:2.6.14")
 
     // docker
     implementation "com.github.docker-java:docker-java:${dockerJavaVersion}"
@@ -92,7 +92,7 @@ task itest {
 }
 
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = '0.8.7'
 }
 // sonarqube code coverage requires jacoco XML report
 jacocoTestReport {
