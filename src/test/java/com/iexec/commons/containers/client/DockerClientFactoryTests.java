@@ -17,12 +17,10 @@
 package com.iexec.commons.containers.client;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Tag("slow")
 class DockerClientFactoryTests {
 
     private static final String DOCKER_IO_USER = "DOCKER_IO_USER";
