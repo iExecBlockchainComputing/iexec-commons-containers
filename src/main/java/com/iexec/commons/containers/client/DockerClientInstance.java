@@ -688,7 +688,7 @@ public class DockerClientInstance {
                 log.info("Container is running [name:{}]", containerName);
             }
             try {
-                Thread.sleep(1000);
+                TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
                 log.error("Sleep was interrupted [exception:{}]", e.getMessage());
                 Thread.currentThread().interrupt();
