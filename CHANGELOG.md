@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2023
+
 ## [[1.0.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.2) 2023-04-13
 
 ### Bug Fixes
