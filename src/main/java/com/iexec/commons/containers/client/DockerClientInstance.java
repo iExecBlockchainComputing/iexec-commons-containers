@@ -29,7 +29,6 @@ import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.iexec.common.utils.ArgsUtils;
-import com.iexec.common.utils.WaitUtils;
 import com.iexec.commons.containers.DockerLogs;
 import com.iexec.commons.containers.DockerRunFinalStatus;
 import com.iexec.commons.containers.DockerRunRequest;
@@ -688,7 +687,12 @@ public class DockerClientInstance {
             if (seconds % 60 == 0) { // don't display logs too often
                 log.info("Container is running [name:{}]", containerName);
             }
-            WaitUtils.sleep(1);
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                log.error("Sleep was interrupted [exception:{}]", e.getMessage());
+                Thread.currentThread().interrupt();
+            }
             isExited = getContainerStatus(containerName).equals(EXITED_STATUS);
             isTimeout = Instant.now().isAfter(timeoutDate);
             seconds++;

@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2023
 
 ### Bug Fixes
-
 - Remove unused `@Tag` annotations in tests. (#8)
+- Remove `WaitUtils` usage. (#9)
+### Dependency Upgrades
+- Upgrade to `iexec-common` 8.0.0. (#9)
 
 ## [[1.0.1]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.1) 2023-03-16
 
