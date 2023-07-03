@@ -16,17 +16,15 @@
 
 package com.iexec.commons.containers;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.shared.utils.cli.CommandLineException;
 import org.apache.maven.shared.utils.cli.CommandLineUtils;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ArgsUtils {
-
-    private ArgsUtils() {
-        throw new UnsupportedOperationException();
-    }
-
     /*
      * stringArgsToArrayArgs("1st_param 2nd_param '3rd param' \"4th param\"") gives
      * ["1st_param", "2nd_param", "3rd param", "4th param"]
