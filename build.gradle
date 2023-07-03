@@ -48,8 +48,11 @@ dependencies {
     // listContainersCmd() over httpclient5
     implementation "com.github.docker-java:docker-java-transport-zerodep:${dockerJavaVersion}"
 
-    // apache commons.lang3
+    // apache commons-lang3
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    // args utils
+    implementation 'org.apache.maven.shared:maven-shared-utils:3.4.2'
 
     // tests
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -86,7 +89,7 @@ test {
     }
 }
 
-task itest {
+tasks.register('itest') {
     group 'Verification'
     description 'Runs the integration tests.'
 }
