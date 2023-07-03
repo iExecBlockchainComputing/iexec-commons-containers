@@ -39,9 +39,6 @@ repositories {
 dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:2.6.14')
 
-    // iexec
-    implementation "com.iexec.common:iexec-common:$iexecCommonVersion"
-
     // docker
     implementation "com.github.docker-java:docker-java:${dockerJavaVersion}"
     // Using zerodep until docker client stops blocking after having called
@@ -63,6 +60,8 @@ dependencies {
     // spring-test for ReflectionTestUtils
     testImplementation 'org.springframework:spring-test'
     testImplementation 'org.awaitility:awaitility'
+    // iexec
+    testImplementation "com.iexec.common:iexec-common:$iexecCommonVersion"
 }
 
 java {
