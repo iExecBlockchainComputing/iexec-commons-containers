@@ -16,6 +16,8 @@
 
 package com.iexec.commons.containers;
 
+import javax.annotation.Nonnull;
+
 public enum SgxDriverMode {
     NONE(),
     LEGACY("/dev/isgx"),
@@ -39,7 +41,7 @@ public enum SgxDriverMode {
      * @return {@literal false} if given {@link SgxDriverMode} is {@literal null}
      * or {@link SgxDriverMode#NONE}, {@literal true} otherwise.
      */
-    public static boolean isDriverModeNotNone(SgxDriverMode driverMode) {
-        return driverMode != null && driverMode != (NONE);
+    public static boolean isDriverModeNotNone(@Nonnull SgxDriverMode driverMode) {
+        return driverMode != NONE;
     }
 }
