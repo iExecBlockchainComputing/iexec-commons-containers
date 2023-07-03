@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2023
 
+### New Features
+- Move `ArgsUtils`, `SgxDriverMode` and `SgxUtils` classes from `iexec-common`. (#14)
+### Dependency Upgrades
+- Add `maven-shared-utils:3.4.2` dependency. (#14)
+
 ## [[1.0.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.3) 2023-06-23
 
 ### Dependency Upgrades
