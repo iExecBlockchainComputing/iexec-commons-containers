@@ -1,8 +1,6 @@
 package com.iexec.commons.containers;
 
 import com.github.dockerjava.api.model.Device;
-import com.iexec.common.sgx.SgxDriverMode;
-import com.iexec.common.utils.SgxUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 

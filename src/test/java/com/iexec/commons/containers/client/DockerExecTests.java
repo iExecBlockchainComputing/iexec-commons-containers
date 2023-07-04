@@ -18,7 +18,7 @@ package com.iexec.commons.containers.client;
 
 import com.iexec.commons.containers.DockerLogs;
 import com.iexec.commons.containers.DockerRunRequest;
-import com.iexec.common.sgx.SgxDriverMode;
+import com.iexec.commons.containers.SgxDriverMode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

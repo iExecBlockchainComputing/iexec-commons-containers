@@ -39,17 +39,17 @@ repositories {
 dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:2.6.14')
 
-    // iexec
-    implementation "com.iexec.common:iexec-common:$iexecCommonVersion"
-
     // docker
     implementation "com.github.docker-java:docker-java:${dockerJavaVersion}"
     // Using zerodep until docker client stops blocking after having called
     // listContainersCmd() over httpclient5
     implementation "com.github.docker-java:docker-java-transport-zerodep:${dockerJavaVersion}"
 
-    // apache commons.lang3
+    // apache commons-lang3
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    // args utils
+    implementation 'org.apache.maven.shared:maven-shared-utils:3.4.2'
 
     // tests
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -60,6 +60,8 @@ dependencies {
     // spring-test for ReflectionTestUtils
     testImplementation 'org.springframework:spring-test'
     testImplementation 'org.awaitility:awaitility'
+    // iexec
+    testImplementation "com.iexec.common:iexec-common:$iexecCommonVersion"
 }
 
 java {
@@ -86,7 +88,7 @@ test {
     }
 }
 
-task itest {
+tasks.register('itest') {
     group 'Verification'
     description 'Runs the integration tests.'
 }
