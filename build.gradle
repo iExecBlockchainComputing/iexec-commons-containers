@@ -60,8 +60,8 @@ dependencies {
     // spring-test for ReflectionTestUtils
     testImplementation 'org.springframework:spring-test'
     testImplementation 'org.awaitility:awaitility'
-    // iexec
-    testImplementation "com.iexec.common:iexec-common:$iexecCommonVersion"
+    // logback
+    testRuntimeOnly 'ch.qos.logback:logback-classic'
 }
 
 java {
