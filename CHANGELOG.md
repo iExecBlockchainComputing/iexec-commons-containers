@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Add missing `lombok.config` file. (#15)
 ### Dependency Upgrades
 - Add `maven-shared-utils:3.4.2` dependency. (#14)
+- Remove `iexec-common` dependency. (#16)
 
 ## [[1.0.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.3) 2023-06-23
 
