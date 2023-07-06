@@ -45,8 +45,8 @@ abstract class AbstractDockerTests {
     static final String CMD = "cmd";
     static final List<String> ENV = List.of("FOO=bar");
     static final String DOCKER_NETWORK = "dockerTestsNetwork";
-    static final String SLASH_IEXEC_OUT = File.separator + "iexec_out";
     static final String SLASH_IEXEC_IN = File.separator + "iexec_in";
+    static final String SLASH_IEXEC_OUT = File.separator + "iexec_out";
     static final String SLASH_TMP = "/tmp";
 
     @Spy
