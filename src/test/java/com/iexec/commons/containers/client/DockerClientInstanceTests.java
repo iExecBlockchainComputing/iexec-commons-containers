@@ -26,7 +26,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import com.iexec.common.utils.IexecFileHelper;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -669,9 +668,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()).isEmpty();
     }
 
@@ -685,9 +684,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()).isNotNull();
         assertThat(hostConfig.getDevices()[0].getPathInContainer())
                 .isEqualTo(DEVICE_PATH_IN_CONTAINER);
@@ -704,9 +703,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()[0].getcGroupPermissions())
                 .isEqualTo(SgxUtils.SGX_CGROUP_PERMISSIONS);
         assertThat(hostConfig.getDevices()[0].getPathInContainer())

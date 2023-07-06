@@ -22,7 +22,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import com.iexec.common.utils.IexecFileHelper;
 import com.iexec.commons.containers.DockerRunRequest;
 import com.iexec.commons.containers.SgxDriverMode;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +33,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +45,8 @@ abstract class AbstractDockerTests {
     static final String CMD = "cmd";
     static final List<String> ENV = List.of("FOO=bar");
     static final String DOCKER_NETWORK = "dockerTestsNetwork";
+    static final String SLASH_IEXEC_IN = File.separator + "iexec_in";
+    static final String SLASH_IEXEC_OUT = File.separator + "iexec_out";
     static final String SLASH_TMP = "/tmp";
 
     @Spy
@@ -91,8 +93,7 @@ abstract class AbstractDockerTests {
                 .env(ENV)
                 .sgxDriverMode(sgxDriverMode)
                 .containerPort(1000)
-                .binds(Collections.singletonList(IexecFileHelper.SLASH_IEXEC_IN +
-                        ":" + IexecFileHelper.SLASH_IEXEC_OUT))
+                .binds(Collections.singletonList(SLASH_IEXEC_IN + ":" + SLASH_IEXEC_OUT))
                 .maxExecutionTime(500000)
                 .dockerNetwork(DOCKER_NETWORK)
                 .workingDir(SLASH_TMP)
