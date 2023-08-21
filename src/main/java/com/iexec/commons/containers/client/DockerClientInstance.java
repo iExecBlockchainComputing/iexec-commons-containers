@@ -25,14 +25,12 @@ import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.core.NameParser;
-import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -726,22 +724,21 @@ public class DockerClientInstance {
             log.error("Cannot get logs of inexistent docker container [name:{}]", containerName);
             return Optional.empty();
         }
-        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        FrameResultCallback callback = new FrameResultCallback();
         try (LogContainerCmd logContainerCmd =
-                    getClient().logContainerCmd(containerName)) {
+                     getClient().logContainerCmd(containerName)) {
             logContainerCmd
                     .withStdOut(true)
                     .withStdErr(true)
-                    .exec(new ExecStartResultCallback(stdout, stderr))
+                    .exec(callback)
                     .awaitCompletion();
         } catch (Exception e) {
             log.error("Error getting docker container logs [name:{}]", containerName, e);
             return Optional.empty();
         }
         return Optional.of(DockerLogs.builder()
-                .stdout(stdout.toString())
-                .stderr(stderr.toString())
+                .stdout(callback.getStdout())
+                .stderr(callback.getStderr())
                 .build());
     }
 
@@ -808,8 +805,7 @@ public class DockerClientInstance {
                     containerName);
             return Optional.empty();
         }
-        StringBuilder stdout = new StringBuilder();
-        StringBuilder stderr = new StringBuilder();
+        FrameResultCallback callback = new FrameResultCallback();
         // create 'docker exec' command
         try (ExecCreateCmd execCreateCmd = getClient().execCreateCmd(containerName)) {
             ExecCreateCmdResponse execCreateCmdResponse = execCreateCmd
@@ -820,16 +816,7 @@ public class DockerClientInstance {
             // run 'docker exec' command
             try (ExecStartCmd execStartCmd = getClient().execStartCmd(execCreateCmdResponse.getId())) {
                 execStartCmd
-                        .exec(new ResultCallback.Adapter<>() {
-                            @Override
-                            public void onNext(Frame object) {
-                                if (object.getStreamType() == StreamType.STDOUT) {
-                                    stdout.append(new String(object.getPayload()));
-                                } else if (object.getStreamType() == StreamType.STDERR) {
-                                    stderr.append(new String(object.getPayload()));
-                                }
-                            }
-                        })
+                        .exec(callback)
                         .awaitCompletion();
             }
         } catch (InterruptedException e) {
@@ -841,8 +828,8 @@ public class DockerClientInstance {
             return Optional.empty();
         }
         return Optional.of(DockerLogs.builder()
-                .stdout(stdout.toString())
-                .stderr(stderr.toString())
+                .stdout(callback.getStdout())
+                .stderr(callback.getStderr())
                 .build());
     }
     //endregion
@@ -909,6 +896,28 @@ public class DockerClientInstance {
                 // everywhere for the default DockerHub registry
                 ? DockerClientInstance.DEFAULT_DOCKER_REGISTRY
                 : registry;
+    }
+
+    static class FrameResultCallback extends ResultCallback.Adapter<Frame> {
+        private final StringBuilder stdout = new StringBuilder();
+        private final StringBuilder stderr = new StringBuilder();
+
+        public String getStdout() {
+            return stdout.toString();
+        }
+
+        public String getStderr() {
+            return stderr.toString();
+        }
+
+        @Override
+        public void onNext(Frame object) {
+            if (object.getStreamType() == StreamType.STDOUT) {
+                stdout.append(new String(object.getPayload()));
+            } else if (object.getStreamType() == StreamType.STDERR) {
+                stderr.append(new String(object.getPayload()));
+            }
+        }
     }
 
 }
