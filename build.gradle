@@ -53,6 +53,7 @@ dependencies {
 
     // tests
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation 'org.mockito:mockito-junit-jupiter'
     testImplementation 'org.assertj:assertj-core'
     // spring-boot-test to capture test outputs
