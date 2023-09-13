@@ -28,9 +28,6 @@ repositories {
             password nexusPassword
         }
     }
-    maven {
-        url 'https://jitpack.io'
-    }
 }
 
 // java-library plugin defines 'api' configuration
