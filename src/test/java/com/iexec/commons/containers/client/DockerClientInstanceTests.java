@@ -18,6 +18,9 @@ package com.iexec.commons.containers.client;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.LogContainerCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.HostConfig;
@@ -28,15 +31,20 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Spy;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +54,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @Slf4j
+@ExtendWith(OutputCaptureExtension.class)
 class DockerClientInstanceTests extends AbstractDockerTests {
 
     //classic
@@ -218,6 +227,20 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     @Test
     void shouldNotPullImageSinceDockerCmdException() {
         assertThat(corruptClientInstance.pullImage(getRandomString())).isFalse();
+    }
+
+    @Test
+    void shouldNotPullImageSinceInterruptedException(CapturedOutput stdout) throws InterruptedException {
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        final PullImageResultCallback resultCallback = mock(PullImageResultCallback.class);
+        ReflectionTestUtils.setField(dockerClientInstance, "client", dockerClient);
+        when(dockerClient.pullImageCmd("alpine")).thenReturn(pullImageCmd);
+        when(pullImageCmd.withTag("latest")).thenReturn(pullImageCmd);
+        when(pullImageCmd.exec(any())).thenReturn(resultCallback);
+        when(resultCallback.awaitCompletion(60, TimeUnit.SECONDS)).thenThrow(InterruptedException.class);
+        dockerClientInstance.pullImage(ALPINE_LATEST);
+        assertThat(stdout.getOut()).contains("Docker pull command was interrupted");
     }
 
     /**
@@ -1077,10 +1100,35 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     @Test
+    void shouldNotGetContainerLogsSinceNoContainer() {
+        final String containerName = getRandomString();
+        assertThat(dockerClientInstance.getContainerLogs(containerName)).isEmpty();
+    }
+
+    @Test
     void shouldNotGetContainerLogsSinceDockerCmdException() {
         final String containerName = getRandomString();
         when(corruptClientInstance.isContainerPresent(containerName)).thenReturn(true);
         assertThat(corruptClientInstance.getContainerLogs(containerName)).isEmpty();
+    }
+
+    @Test
+    void shouldNotGetContainerLogsSinceInterruptedException(CapturedOutput output) throws InterruptedException {
+        final String containerName = getRandomString();
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final LogContainerCmd logContainerCmd = mock(LogContainerCmd.class);
+        final DockerClientInstance.FrameResultCallback resultCallback = mock(DockerClientInstance.FrameResultCallback.class);
+        ReflectionTestUtils.setField(dockerClientInstance, "client", dockerClient);
+        doReturn(true).when(dockerClientInstance).isContainerPresent(containerName);
+        when(dockerClient.logContainerCmd(containerName)).thenReturn(logContainerCmd);
+        when(logContainerCmd.withStdOut(true)).thenReturn(logContainerCmd);
+        when(logContainerCmd.withStdErr(true)).thenReturn(logContainerCmd);
+        when(logContainerCmd.exec(any())).thenReturn(resultCallback);
+        when(resultCallback.awaitCompletion()).thenThrow(InterruptedException.class);
+        dockerClientInstance.getContainerLogs(containerName);
+        assertThat(output.getOut()).contains("Docker logs command was interrupted");
+        verify(logContainerCmd).exec(any());
+        verify(dockerClient).logContainerCmd(containerName);
     }
     //endregion
 
