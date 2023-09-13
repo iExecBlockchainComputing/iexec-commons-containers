@@ -274,24 +274,28 @@ public class DockerClientInstance {
                     imageName, repoAndTag.repos, repoAndTag.tag);
             return false;
         }
+        PullImageResultCallback callback = new PullImageResultCallback();
         try (PullImageCmd pullImageCmd =
                      getClient().pullImageCmd(repoAndTag.repos)) {
             log.info("Pulling docker image [name:{}]", imageName);
             boolean isPulledBeforeTimeout = pullImageCmd
                     .withTag(repoAndTag.tag)
-                    .exec(new PullImageResultCallback() {})
+                    .exec(callback)
                     .awaitCompletion(timeout.toSeconds(), TimeUnit.SECONDS);
-            if (!isPulledBeforeTimeout){
+            if (!isPulledBeforeTimeout) {
                 log.error("Docker image has not been pulled (timeout) [name:{}, timeout:{}s]",
                         imageName, timeout.toSeconds());
                 return false;
             }
             log.info("Pulled docker image [name:{}]", imageName);
             return true;
+        } catch (InterruptedException e) {
+            log.error("Docker pull command was interrupted [name:{}]", imageName, e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("Error pulling docker image [name:{}]", imageName, e);
-            return false;
         }
+        return false;
     }
 
     public String getImageId(String imageName) {
@@ -732,7 +736,10 @@ public class DockerClientInstance {
                     .withStdErr(true)
                     .exec(callback)
                     .awaitCompletion();
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            log.error("Docker logs command was interrupted [name:{}]", containerName, e);
+            Thread.currentThread().interrupt();
+        } catch (RuntimeException e) {
             log.error("Error getting docker container logs [name:{}]", containerName, e);
             return Optional.empty();
         }

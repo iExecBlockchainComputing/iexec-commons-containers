@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Quality
 - Replace deprecated `ExecStartResultCallback` with `ResultCallback.Adapter` in `DockerClientInstance`. (#17)
 - Upgrade to Gradle 8.2.1 with up-to-date plugins. (#19)
+- Properly handle `InterruptedException` instances in `DockerClientInstance`. (#20)
 ### Dependency Upgrades
 - Add `maven-shared-utils:3.4.2` dependency. (#14)
 - Remove `iexec-common` dependency. (#16)
