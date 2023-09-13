@@ -348,7 +348,6 @@ public class DockerClientInstance {
 
     public synchronized boolean removeImage(String imageName) {
         if (StringUtils.isBlank(imageName)) {
-            // TODO throw new IllegalArgumentException("Image name cannot be blank");
             log.error("Docker image name cannot be blank");
             return false;
         }
@@ -596,7 +595,6 @@ public class DockerClientInstance {
 
     public String getContainerName(String containerId) {
         if (StringUtils.isBlank(containerId)) {
-            // TODO throw IllegalArgumentException
             log.error("Invalid docker container id [id:{}]", containerId);
             return "";
         }
