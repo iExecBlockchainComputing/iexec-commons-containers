@@ -108,7 +108,7 @@ public class DockerClientInstance {
     //region volume
     public synchronized boolean createVolume(String volumeName) {
         if (StringUtils.isBlank(volumeName)) {
-            log.error("Invalid docker volume name [name:{}]", volumeName);
+            logInvalidVolumeNameError(volumeName);
             return false;
         }
         if (isVolumePresent(volumeName)) {
@@ -137,6 +137,7 @@ public class DockerClientInstance {
 
     public Optional<InspectVolumeResponse> getVolume(String volumeName) {
         if (StringUtils.isBlank(volumeName)) {
+            logInvalidVolumeNameError(volumeName);
             return Optional.empty();
         }
         try (ListVolumesCmd listVolumesCmd = getClient().listVolumesCmd()) {
@@ -156,6 +157,7 @@ public class DockerClientInstance {
 
     public synchronized boolean removeVolume(String volumeName) {
         if (StringUtils.isBlank(volumeName)) {
+            logInvalidVolumeNameError(volumeName);
             return false;
         }
         try (RemoveVolumeCmd removeVolumeCmd = getClient().removeVolumeCmd(volumeName)) {
@@ -169,12 +171,16 @@ public class DockerClientInstance {
         }
         return false;
     }
+
+    private void logInvalidVolumeNameError(String volumeName) {
+        log.error("Invalid docker volume name [name:{}]", volumeName);
+    }
     //endregion
 
     //region network
     public synchronized String createNetwork(String networkName) {
         if (StringUtils.isBlank(networkName)) {
-            log.error("Invalid docker network name [name:{}]", networkName);
+            logInvalidNetworkNameError(networkName);
             return "";
         }
         if (isNetworkPresent(networkName)) {
@@ -200,7 +206,7 @@ public class DockerClientInstance {
 
     public String getNetworkId(String networkName) {
         if (StringUtils.isBlank(networkName)) {
-            log.error("Invalid docker network name [name:{}]", networkName);
+            logInvalidNetworkNameError(networkName);
             return "";
         }
         try (ListNetworksCmd listNetworksCmd = getClient().listNetworksCmd()) {
@@ -225,7 +231,7 @@ public class DockerClientInstance {
 
     public synchronized boolean removeNetwork(String networkName) {
         if (StringUtils.isBlank(networkName)) {
-            log.error("Invalid docker network name [name:{}]", networkName);
+            logInvalidNetworkNameError(networkName);
             return false;
         }
         try (RemoveNetworkCmd removeNetworkCmd =
@@ -239,6 +245,10 @@ public class DockerClientInstance {
             log.error("Error removing docker network [name:{}]", networkName, e);
         }
         return false;
+    }
+
+    private void logInvalidNetworkNameError(String networkName) {
+        log.error("Invalid docker network name [name:{}]", networkName);
     }
     //endregion
 
