@@ -651,8 +651,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         String container1Id = dockerClientInstance.createContainer(request);
         // create second container with same name (should replace previous one)
         String container2Id = dockerClientInstance.createContainer(request);
-        assertThat(container2Id).isNotEmpty();
-        assertThat(container2Id).isNotEqualTo(container1Id);
+        assertThat(container2Id)
+                .isNotEmpty()
+                .isNotEqualTo(container1Id);
         // cleaning
         dockerClientInstance.removeContainer(request.getContainerName());
     }
@@ -891,8 +892,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
         String containerId =
                 dockerClientInstance.getContainerId(request.getContainerName());
-        assertThat(containerId).isNotEmpty();
-        assertThat(containerId).isEqualTo(expectedId);
+        assertThat(containerId)
+                .isNotEmpty()
+                .isEqualTo(expectedId);
 
         // cleaning
         dockerClientInstance.removeContainer(request.getContainerName());
@@ -1033,7 +1035,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.createContainer(request);
         int exitCode = dockerClientInstance
                 .getContainerExitCode(request.getContainerName());
-        assertThat(exitCode).isEqualTo(0);
+        assertThat(exitCode).isZero();
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
