@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Move `ArgsUtils`, `SgxDriverMode` and `SgxUtils` classes from `iexec-common`. (#14)
 ### Bug Fixes
 - Add missing `lombok.config` file. (#15)
+- Use official `/dev/sgx_enclave` and `/dev/sgx_provision` devices. (#23)
 ### Quality
 - Replace deprecated `ExecStartResultCallback` with `ResultCallback.Adapter` in `DockerClientInstance`. (#17)
 - Upgrade to Gradle 8.2.1 with up-to-date plugins. (#19)
