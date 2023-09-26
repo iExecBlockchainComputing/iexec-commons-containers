@@ -1,8 +1,6 @@
 package com.iexec.commons.containers;
 
 import com.github.dockerjava.api.model.Device;
-import com.iexec.common.sgx.SgxDriverMode;
-import com.iexec.common.utils.SgxUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -88,15 +86,15 @@ class DockerRunRequestTests {
         assertThat(request.getDevices().get(0).getcGroupPermissions())
                 .isEqualTo(SgxUtils.SGX_CGROUP_PERMISSIONS);
         assertThat(request.getDevices().get(0).getPathInContainer())
-                .isEqualTo("/dev/sgx/enclave");
+                .isEqualTo("/dev/sgx_enclave");
         assertThat(request.getDevices().get(0).getPathOnHost())
-                .isEqualTo("/dev/sgx/enclave");
+                .isEqualTo("/dev/sgx_enclave");
         assertThat(request.getDevices().get(1).getcGroupPermissions())
                 .isEqualTo(SgxUtils.SGX_CGROUP_PERMISSIONS);
         assertThat(request.getDevices().get(1).getPathInContainer())
-                .isEqualTo("/dev/sgx/provision");
+                .isEqualTo("/dev/sgx_provision");
         assertThat(request.getDevices().get(1).getPathOnHost())
-                .isEqualTo("/dev/sgx/provision");
+                .isEqualTo("/dev/sgx_provision");
     }
     // endregion
 

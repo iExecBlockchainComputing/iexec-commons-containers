@@ -32,29 +32,29 @@ class DockerClientFactoryTests {
     }
 
     @Test
-    void shouldGetTheSameUnauthenticatedClientInstanceWithDefaultRegistry() throws Exception {
+    void shouldGetTheSameUnauthenticatedClientInstanceWithDefaultRegistry() {
         DockerClientInstance instance1 = DockerClientFactory.getDockerClientInstance();
         DockerClientInstance instance2 = DockerClientFactory.getDockerClientInstance();
-        assertThat(instance1 == instance2).isTrue();
+        assertThat(instance2).isSameAs(instance1);
     }
 
     @Test
-    void shouldGetTheSameUnauthenticatedClientInstanceWithCustomRegistry() throws Exception {
+    void shouldGetTheSameUnauthenticatedClientInstanceWithCustomRegistry() {
         String registryAddress = "registryAddress";
         DockerClientInstance instance1 = DockerClientFactory.getDockerClientInstance(registryAddress);
         DockerClientInstance instance2 = DockerClientFactory.getDockerClientInstance(registryAddress);
-        assertThat(instance1 == instance2).isTrue();
+        assertThat(instance2).isSameAs(instance1);
     }
 
     @Test
-    void shouldGetTheSameAuthenticatedClient() throws Exception {
+    void shouldGetTheSameAuthenticatedClient() {
         String dockerIoUsername = getEnvValue(DOCKER_IO_USER);
         String dockerIoPassword = getEnvValue(DOCKER_IO_PASSWORD);
         DockerClientInstance instance1 = DockerClientFactory.getDockerClientInstance(
                 DockerClientInstance.DEFAULT_DOCKER_REGISTRY, dockerIoUsername, dockerIoPassword);
         DockerClientInstance instance2 = DockerClientFactory.getDockerClientInstance(
                 DockerClientInstance.DEFAULT_DOCKER_REGISTRY, dockerIoUsername, dockerIoPassword);
-        assertThat(instance1 == instance2).isTrue();
+        assertThat(instance2).isSameAs(instance1);
     }
 
     private String getEnvValue(String envVarName) {

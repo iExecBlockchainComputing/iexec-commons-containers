@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[1.1.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.0) 2023-09-26
+
+### New Features
+- Move `ArgsUtils`, `SgxDriverMode` and `SgxUtils` classes from `iexec-common`. (#14)
+### Bug Fixes
+- Add missing `lombok.config` file. (#15)
+- Use official `/dev/sgx_enclave` and `/dev/sgx_provision` devices. (#23)
+### Quality
+- Replace deprecated `ExecStartResultCallback` with `ResultCallback.Adapter` in `DockerClientInstance`. (#17)
+- Upgrade to Gradle 8.2.1 with up-to-date plugins. (#19)
+- Properly handle `InterruptedException` instances in `DockerClientInstance`. (#20)
+- Several quality fixes (assertions, code smells, TODOs). (#21)
+### Dependency Upgrades
+- Add `maven-shared-utils:3.4.2` dependency. (#14)
+- Remove `iexec-common` dependency. (#16)
+- Upgrade to Spring Boot 2.7.14. (#18)
+- Upgrade to `jenkins-library` 2.7.3. (#22)
+
 ## [[1.0.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.0.3) 2023-06-23
 
 ### Dependency Upgrades

@@ -18,37 +18,33 @@ package com.iexec.commons.containers.client;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.LogContainerCmd;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.Device;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.transport.DockerHttpClient;
-import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import com.iexec.common.sgx.SgxDriverMode;
-import com.iexec.common.utils.ArgsUtils;
-import com.iexec.common.utils.IexecFileHelper;
-import com.iexec.common.utils.SgxUtils;
-import com.iexec.commons.containers.DockerLogs;
-import com.iexec.commons.containers.DockerRunFinalStatus;
-import com.iexec.commons.containers.DockerRunRequest;
-import com.iexec.commons.containers.DockerRunResponse;
+import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Spy;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +54,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @Slf4j
+@ExtendWith(OutputCaptureExtension.class)
 class DockerClientInstanceTests extends AbstractDockerTests {
 
     //classic
@@ -86,8 +83,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
     @Spy
     private DockerClient spiedClient = dockerClientInstance.getClient();
-
-    private DockerClient corruptedClient = getCorruptedDockerClient();
 
     @BeforeAll
     static void beforeAll() {
@@ -232,6 +227,20 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     @Test
     void shouldNotPullImageSinceDockerCmdException() {
         assertThat(corruptClientInstance.pullImage(getRandomString())).isFalse();
+    }
+
+    @Test
+    void shouldNotPullImageSinceInterruptedException(CapturedOutput stdout) throws InterruptedException {
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        final PullImageResultCallback resultCallback = mock(PullImageResultCallback.class);
+        ReflectionTestUtils.setField(dockerClientInstance, "client", dockerClient);
+        when(dockerClient.pullImageCmd("alpine")).thenReturn(pullImageCmd);
+        when(pullImageCmd.withTag("latest")).thenReturn(pullImageCmd);
+        when(pullImageCmd.exec(any())).thenReturn(resultCallback);
+        when(resultCallback.awaitCompletion(60, TimeUnit.SECONDS)).thenThrow(InterruptedException.class);
+        dockerClientInstance.pullImage(ALPINE_LATEST);
+        assertThat(stdout.getOut()).contains("Docker pull command was interrupted");
     }
 
     /**
@@ -630,12 +639,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     @Test
     void shouldNotCreateContainerSinceDockerCmdException() {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        when(dockerClientInstance.getClient())
-                .thenCallRealMethod() // isContainerPresent
-                .thenCallRealMethod() // isNetworkPresent
-                .thenCallRealMethod() // createNetwork
-                .thenReturn(corruptedClient);
-        assertThat(dockerClientInstance.createContainer(request)).isEmpty();
+        when(corruptClientInstance.isContainerPresent(request.getContainerName())).thenReturn(false);
+        when(corruptClientInstance.createNetwork(request.getDockerNetwork())).thenReturn("networkId");
+        assertThat(corruptClientInstance.createContainer(request)).isEmpty();
     }
 
     @Test
@@ -645,8 +651,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         String container1Id = dockerClientInstance.createContainer(request);
         // create second container with same name (should replace previous one)
         String container2Id = dockerClientInstance.createContainer(request);
-        assertThat(container2Id).isNotEmpty();
-        assertThat(container2Id).isNotEqualTo(container1Id);
+        assertThat(container2Id)
+                .isNotEmpty()
+                .isNotEqualTo(container1Id);
         // cleaning
         dockerClientInstance.removeContainer(request.getContainerName());
     }
@@ -675,9 +682,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()).isEmpty();
     }
 
@@ -691,9 +698,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()).isNotNull();
         assertThat(hostConfig.getDevices()[0].getPathInContainer())
                 .isEqualTo(DEVICE_PATH_IN_CONTAINER);
@@ -710,9 +717,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(hostConfig.getNetworkMode())
                 .isEqualTo(DOCKER_NETWORK);
         assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_IN);
+                .isEqualTo(SLASH_IEXEC_IN);
         assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(IexecFileHelper.SLASH_IEXEC_OUT);
+                .isEqualTo(SLASH_IEXEC_OUT);
         assertThat(hostConfig.getDevices()[0].getcGroupPermissions())
                 .isEqualTo(SgxUtils.SGX_CGROUP_PERMISSIONS);
         assertThat(hostConfig.getDevices()[0].getPathInContainer())
@@ -885,8 +892,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
         String containerId =
                 dockerClientInstance.getContainerId(request.getContainerName());
-        assertThat(containerId).isNotEmpty();
-        assertThat(containerId).isEqualTo(expectedId);
+        assertThat(containerId)
+                .isNotEmpty()
+                .isEqualTo(expectedId);
 
         // cleaning
         dockerClientInstance.removeContainer(request.getContainerName());
@@ -954,13 +962,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     @Test
     void shouldNotStartContainerSinceDockerCmdException() {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        String containerName = request.getContainerName();
-        request.setCmd("sh -c 'sleep 1 && echo Hello from Docker alpine!'");
+        final String containerName = request.getContainerName();
         dockerClientInstance.createContainer(request);
         assertThat(corruptClientInstance.startContainer(containerName)).isFalse();
-
-        // cleaning
-        dockerClientInstance.stopContainer(containerName);
         dockerClientInstance.removeContainer(containerName);
     }
     //endregion
@@ -1031,7 +1035,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.createContainer(request);
         int exitCode = dockerClientInstance
                 .getContainerExitCode(request.getContainerName());
-        assertThat(exitCode).isEqualTo(0);
+        assertThat(exitCode).isZero();
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
@@ -1098,16 +1102,35 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     @Test
+    void shouldNotGetContainerLogsSinceNoContainer() {
+        final String containerName = getRandomString();
+        assertThat(dockerClientInstance.getContainerLogs(containerName)).isEmpty();
+    }
+
+    @Test
     void shouldNotGetContainerLogsSinceDockerCmdException() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        dockerClientInstance.createContainer(request);
-        when(dockerClientInstance.getClient())
-                .thenCallRealMethod()        // isContainerPresent
-                .thenReturn(corruptedClient) // logContainerCmd
-                .thenCallRealMethod();       // removeContainer
-        assertThat(dockerClientInstance.getContainerLogs(request.getContainerName()))
-                .isEmpty();
-        dockerClientInstance.removeContainer(request.getContainerName());
+        final String containerName = getRandomString();
+        when(corruptClientInstance.isContainerPresent(containerName)).thenReturn(true);
+        assertThat(corruptClientInstance.getContainerLogs(containerName)).isEmpty();
+    }
+
+    @Test
+    void shouldNotGetContainerLogsSinceInterruptedException(CapturedOutput output) throws InterruptedException {
+        final String containerName = getRandomString();
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final LogContainerCmd logContainerCmd = mock(LogContainerCmd.class);
+        final DockerClientInstance.FrameResultCallback resultCallback = mock(DockerClientInstance.FrameResultCallback.class);
+        ReflectionTestUtils.setField(dockerClientInstance, "client", dockerClient);
+        doReturn(true).when(dockerClientInstance).isContainerPresent(containerName);
+        when(dockerClient.logContainerCmd(containerName)).thenReturn(logContainerCmd);
+        when(logContainerCmd.withStdOut(true)).thenReturn(logContainerCmd);
+        when(logContainerCmd.withStdErr(true)).thenReturn(logContainerCmd);
+        when(logContainerCmd.exec(any())).thenReturn(resultCallback);
+        when(resultCallback.awaitCompletion()).thenThrow(InterruptedException.class);
+        dockerClientInstance.getContainerLogs(containerName);
+        assertThat(output.getOut()).contains("Docker logs command was interrupted");
+        verify(logContainerCmd).exec(any());
+        verify(dockerClient).logContainerCmd(containerName);
     }
     //endregion
 
@@ -1170,20 +1193,10 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
     @Test
     void shouldNotStopContainerSinceDockerCmdException() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        String containerName = request.getContainerName();
-        request.setCmd("sh -c 'sleep 10 && echo Hello from Docker alpine!'");
-        pullImageIfNecessary();
-        dockerClientInstance.createContainer(request);
-        dockerClientInstance.startContainer(containerName);
-        when(dockerClientInstance.getClient())
-                .thenCallRealMethod()        // isContainerPresent
-                .thenCallRealMethod()        // getContainerStatus
-                .thenReturn(corruptedClient) // stopContainerCmd
-                .thenCallRealMethod();       // stopAndRemoveContainer
-        assertThat(dockerClientInstance.stopContainer(containerName)).isFalse();
-        // clean
-        dockerClientInstance.stopAndRemoveContainer(containerName);
+        final String containerName = getRandomString();
+        when(corruptClientInstance.isContainerPresent(containerName)).thenReturn(true);
+        when(corruptClientInstance.isContainerActive(containerName)).thenReturn(true);
+        assertThat(corruptClientInstance.stopContainer(containerName)).isFalse();
     }
     //endregion
 
@@ -1223,20 +1236,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
     @Test
     void shouldNotRemoveContainerSinceDockerCmdException() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        String containerName = request.getContainerName();
-        request.setCmd("sh -c 'sleep 5 && echo Hello from Docker alpine!'");
-        pullImageIfNecessary();
-        dockerClientInstance.createContainer(request);
-        dockerClientInstance.startContainer(containerName);
-        when(dockerClientInstance.getClient())
-                .thenCallRealMethod()        // isContainerPresent
-                .thenReturn(corruptedClient) // removeContainerCmd
-                .thenCallRealMethod();       // stopAndRemoveContainer
-
-        assertThat(dockerClientInstance.removeContainer(containerName)).isFalse();
-        // clean
-        dockerClientInstance.stopAndRemoveContainer(containerName);
+        final String containerName = getRandomString();
+        when(corruptClientInstance.isContainerPresent(containerName)).thenReturn(true);
+        assertThat(corruptClientInstance.removeContainer(containerName)).isFalse();
     }
     //endregion
 
@@ -1247,18 +1249,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         String random = RandomStringUtils.randomAlphanumeric(20);
         usedRandomNames.add(random);
         return random;
-    }
-
-    private DockerClient getCorruptedDockerClient() {
-        DockerClientConfig config =
-                DefaultDockerClientConfig.createDefaultConfigBuilder()
-                        .withDockerHost("tcp://localhost:11111")
-                        .build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
-                .build();
-        return DockerClientImpl.getInstance(config, httpClient);
     }
 
     private void pullImageIfNecessary() {

@@ -17,8 +17,6 @@
 package com.iexec.commons.containers;
 
 import com.github.dockerjava.api.model.Device;
-import com.iexec.common.sgx.SgxDriverMode;
-import com.iexec.common.utils.ArgsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
