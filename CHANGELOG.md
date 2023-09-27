@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[1.1.1]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.1) 2023-09-27
+
+### Bug Fixes
+- Revert PR #23, the official **SGX devices** coming with the **in-kernel SGX driver** since kernel 5.11
+  are not yet supported in SGX enclaves based on the Gramine framework currently in use. (#25)
+
 ## [[1.1.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.0) 2023-09-26
 
 ### New Features
