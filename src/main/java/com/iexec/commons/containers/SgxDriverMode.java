@@ -16,21 +16,40 @@
 
 package com.iexec.commons.containers;
 
+import lombok.Getter;
+
 import javax.annotation.Nonnull;
 
+/**
+ * List of supported SGX drivers and devices.
+ * <p>
+ * Currently, 3 modes are supported:
+ * <ul>
+ * <li>{@code NONE} for no device, the container will not be running in an enclave.
+ * <li>{@code LEGACY} for {@code /dev/isgx} device. This device is created by installing manually the SGX driver in a
+ *     Linux kernel prior to version 5.11.
+ * <li>{@code NATIVE} for {@code /dev/sgx/enclave} and {@code /dev/sgx/provision} devices. Those devices are created
+ *     automatically on compatible hardware where SGX is supported and kernel version is greater than or equal to 5.11.
+ * </ul>
+ * <p>
+ * Since kernel version 5.11, official devices are {@code /dev/sgx_enclave} and {@code /dev/sgx_provision}.
+ * It is not possible to upgrade the {@code NATIVE} driver mode with those devices as we use an old version of the
+ * Gramine framework which does not support them. An upgrade to a newer version of the Gramine framework is required
+ * before updating this enum.
+ *
+ * @see <a href="https://github.com/gramineproject/gramine/blob/2ad54dd52426da115261a26244c10110840f9c83/tools/sgx/is-sgx-available/is_sgx_available.cpp#L172">
+ *      Gramine SGX drivers support</a>
+ */
+@Getter
 public enum SgxDriverMode {
     NONE(),
     LEGACY("/dev/isgx"),
-    NATIVE("/dev/sgx_enclave", "/dev/sgx_provision");
+    NATIVE("/dev/sgx/enclave", "/dev/sgx/provision");
 
     private final String[] devices;
 
     SgxDriverMode(String... driverNames) {
         this.devices = driverNames;
-    }
-
-    public String[] getDevices() {
-        return devices;
     }
 
     /**
