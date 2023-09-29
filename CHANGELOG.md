@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2023
 
+## [[1.1.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.2) 2023-09-27
+
+### Bug Fixes
+- Missed version update in `gradle.properties` in hotfix 1.1.1.
+
+## [[1.1.1]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.1) 2023-09-27
+
+### Bug Fixes
+- Revert PR #23, the official **SGX devices** coming with the **in-kernel SGX driver** since kernel 5.11
+  are not yet supported in SGX enclaves based on the Gramine framework currently in use. (#25)
+
+## [[1.1.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.0) 2023-09-26
+
 ### New Features
 - Move `ArgsUtils`, `SgxDriverMode` and `SgxUtils` classes from `iexec-common`. (#14)
 ### Bug Fixes
