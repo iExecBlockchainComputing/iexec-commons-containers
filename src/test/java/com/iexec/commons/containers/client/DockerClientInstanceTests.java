@@ -640,7 +640,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     void shouldNotCreateContainerSinceDockerCmdException() {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
         when(corruptClientInstance.isContainerPresent(request.getContainerName())).thenReturn(false);
-        when(corruptClientInstance.createNetwork(request.getDockerNetwork())).thenReturn("networkId");
+        when(corruptClientInstance.createNetwork(DOCKER_NETWORK)).thenReturn("networkId");
         assertThat(corruptClientInstance.createContainer(request)).isEmpty();
     }
 
@@ -753,8 +753,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         CreateContainerCmd actualCreateContainerCmd = oActualCreateContainerCmd.get();
         assertThat(actualCreateContainerCmd.getName())
                 .isEqualTo(request.getContainerName());
-        assertThat(actualCreateContainerCmd.getHostConfig())
-                .isEqualTo(dockerClientInstance.buildHostConfigFromRunRequest(request));
         assertThat(actualCreateContainerCmd.getCmd()).isNull();
         assertThat(actualCreateContainerCmd.getEnv()).isNull();
         assertThat(actualCreateContainerCmd.getExposedPorts()).isEmpty();
@@ -773,8 +771,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         CreateContainerCmd actualCreateContainerCmd = oActualCreateContainerCmd.get();
         assertThat(actualCreateContainerCmd.getName())
                 .isEqualTo(request.getContainerName());
-        assertThat(actualCreateContainerCmd.getHostConfig())
-                .isEqualTo(dockerClientInstance.buildHostConfigFromRunRequest(request));
         assertThat(actualCreateContainerCmd.getCmd())
                 .isEqualTo(ArgsUtils.stringArgsToArrayArgs(request.getCmd()));
         assertThat(actualCreateContainerCmd.getEnv()).isNotNull();

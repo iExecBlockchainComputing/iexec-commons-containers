@@ -453,12 +453,10 @@ public class DockerClientInstance {
     }
 
     /**
-     * Create docker container and remove existing
-     * duplicate if found.
+     * Create docker container and remove existing duplicate if found.
      * 
-     * @param dockerRunRequest
-     * @return created container id or an empty
-     * string if a problem occurs
+     * @param dockerRunRequest Container creation parameters
+     * @return A container ID if a container was successfully created or an empty string otherwise
      */
     public String createContainer(DockerRunRequest dockerRunRequest) {
         return createContainer(dockerRunRequest, true);
@@ -469,10 +467,9 @@ public class DockerClientInstance {
      * remove existing duplicate container (if found)
      * or not.
      * 
-     * @param dockerRunRequest
-     * @param removeDuplicate
-     * @return newly created container id if removeDuplicate is
-     * true, otherwise an empty string.
+     * @param dockerRunRequest Container creation parameters
+     * @param removeDuplicate Whether to remove or not an existing container with the same name
+     * @return A container ID if a container was successfully created or an empty string otherwise
      */
     public synchronized String createContainer(DockerRunRequest dockerRunRequest, boolean removeDuplicate) {
         if (dockerRunRequest == null
@@ -493,7 +490,7 @@ public class DockerClientInstance {
             removeContainer(containerName);
         }
         // create network if needed
-        String networkName = dockerRunRequest.getDockerNetwork();
+        String networkName = dockerRunRequest.getHostConfig().getNetworkMode();
         if (StringUtils.isNotBlank(networkName)
                 && StringUtils.isBlank(createNetwork(networkName))) {
             log.error("Failed to create network for the container [name:{}, networkName:{}]",
@@ -524,7 +521,7 @@ public class DockerClientInstance {
      * when creating a container
      *
      * @param dockerRunRequest contains information for creating container
-     * @return a templated HostConfig
+     * @return a populated CreateContainerCmd
      */
     public Optional<CreateContainerCmd> buildCreateContainerCmdFromRunRequest(
             DockerRunRequest dockerRunRequest,
@@ -534,8 +531,8 @@ public class DockerClientInstance {
             return Optional.empty();
         }
         createContainerCmd
-                .withName(dockerRunRequest.getContainerName())
-                .withHostConfig(buildHostConfigFromRunRequest(dockerRunRequest));
+                .withHostConfig(dockerRunRequest.getHostConfig())
+                .withName(dockerRunRequest.getContainerName());
         if (StringUtils.isNotBlank(dockerRunRequest.getCmd())) {
             createContainerCmd.withCmd(
                     ArgsUtils.stringArgsToArrayArgs(dockerRunRequest.getCmd()));
@@ -560,13 +557,9 @@ public class DockerClientInstance {
     }
 
     /**
-     * Some params of the DockerRunRequest need to be passed to the HostConfig
-     * instead of the CreateContainerCmd
-     *
-     * @param dockerRunRequest contains information for setting up host
-     *                         when creating a container
-     * @return a templated HostConfig
+     * @deprecated Use HostConfig field in DockerRunRequest
      */
+    @Deprecated(forRemoval = true)
     public HostConfig buildHostConfigFromRunRequest(DockerRunRequest dockerRunRequest) {
         if (dockerRunRequest == null) {
             return null;
@@ -593,7 +586,7 @@ public class DockerClientInstance {
      * Check if a container is active. The container is considered active
      * it is in one of the statuses {@code running} or {@code restarting}.
      * 
-     * @param containerName
+     * @param containerName name of the container
      * @return true if the container is in one of the active statuses,
      *         false otherwise.
      */

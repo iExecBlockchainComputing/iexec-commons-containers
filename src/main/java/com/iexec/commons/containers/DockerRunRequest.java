@@ -17,6 +17,7 @@
 package com.iexec.commons.containers;
 
 import com.github.dockerjava.api.model.Device;
+import com.github.dockerjava.api.model.HostConfig;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,6 +34,8 @@ import java.util.Objects;
 @AllArgsConstructor
 public class DockerRunRequest {
 
+    @Builder.Default
+    private HostConfig hostConfig = HostConfig.newHostConfig();
     private String chainTaskId;
     private String containerName;
     private int containerPort;
@@ -40,12 +43,15 @@ public class DockerRunRequest {
     private String entrypoint;
     private String cmd;
     private List<String> env;
+    @Deprecated(forRemoval = true)
     private List<String> binds;
     private long maxExecutionTime;
     private SgxDriverMode sgxDriverMode;
+    @Deprecated(forRemoval = true)
     private String dockerNetwork;
     private String workingDir;
     private boolean shouldDisplayLogs;
+    @Deprecated(forRemoval = true)
     private List<Device> devices;
 
     public String getStringArgsCmd() {
@@ -57,17 +63,17 @@ public class DockerRunRequest {
     }
 
     /**
-     * Gets a copy of the binds list.
-     * @return A copy of defined binds or an empty list
+     * @deprecated Use new HostConfig field
      */
+    @Deprecated(forRemoval = true)
     public List<String> getBinds() {
         return binds != null ? new ArrayList<>(binds) : Collections.emptyList();
     }
 
     /**
-     * Gets a copy of the devices list.
-     * @return A copy of defined devices or an empty list
+     * @deprecated Use new HostConfig field
      */
+    @Deprecated(forRemoval = true)
     public List<Device> getDevices() {
         return devices != null ? new ArrayList<>(devices) : Collections.emptyList();
     }
