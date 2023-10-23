@@ -43,14 +43,17 @@ public class DockerRunRequest {
     private String entrypoint;
     private String cmd;
     private List<String> env;
+    /** @deprecated Use HostConfig instead */
     @Deprecated(forRemoval = true)
     private List<String> binds;
     private long maxExecutionTime;
     private SgxDriverMode sgxDriverMode;
+    /** @deprecated Use HostConfig instead */
     @Deprecated(forRemoval = true)
     private String dockerNetwork;
     private String workingDir;
     private boolean shouldDisplayLogs;
+    /** @deprecated Use HostConfig instead */
     @Deprecated(forRemoval = true)
     private List<Device> devices;
 
