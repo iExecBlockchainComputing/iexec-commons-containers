@@ -17,6 +17,8 @@
 package com.iexec.commons.containers.client;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -85,7 +87,11 @@ abstract class AbstractDockerTests {
     }
 
     DockerRunRequest getDefaultDockerRunRequest(SgxDriverMode sgxDriverMode) {
+        HostConfig hostConfig = HostConfig.newHostConfig()
+                .withBinds(Bind.parse(SLASH_IEXEC_IN + ":" + SLASH_IEXEC_OUT))
+                .withNetworkMode(DOCKER_NETWORK);
         return DockerRunRequest.builder()
+                .hostConfig(hostConfig)
                 .containerName(getRandomString())
                 .chainTaskId(CHAIN_TASK_ID)
                 .imageUri(ALPINE_LATEST)
@@ -93,9 +99,7 @@ abstract class AbstractDockerTests {
                 .env(ENV)
                 .sgxDriverMode(sgxDriverMode)
                 .containerPort(1000)
-                .binds(Collections.singletonList(SLASH_IEXEC_IN + ":" + SLASH_IEXEC_OUT))
                 .maxExecutionTime(500000)
-                .dockerNetwork(DOCKER_NETWORK)
                 .workingDir(SLASH_TMP)
                 .build();
     }
