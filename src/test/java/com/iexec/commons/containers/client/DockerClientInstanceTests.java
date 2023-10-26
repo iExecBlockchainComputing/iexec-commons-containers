@@ -485,8 +485,8 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg1);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
         assertThat(dockerRunResponse.getExecutionDuration())
-                .isGreaterThanOrEqualTo(Duration.of(5, ChronoUnit.SECONDS))
-                .isLessThan(Duration.of(6, ChronoUnit.SECONDS));
+                .isGreaterThanOrEqualTo(Duration.ofSeconds(5))
+                .isLessThan(Duration.ofSeconds(6));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -601,7 +601,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
-        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.of(2, ChronoUnit.SECONDS));
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -1273,7 +1273,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     private void pullImageIfNecessary() {
-        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()){
+        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()) {
             dockerClientInstance.pullImage(ALPINE_LATEST);
         }
     }
