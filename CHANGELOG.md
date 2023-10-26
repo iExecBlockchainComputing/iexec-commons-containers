@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 - Add `HostConfig` member in `DockerRunRequest`, add related deprecations. (#28)
+- Add `executionDuration` member in `DockerRunResponse`. (#29)
 
 ## [[1.1.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.2) 2023-09-27
 
