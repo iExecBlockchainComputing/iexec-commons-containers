@@ -21,6 +21,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,6 +32,7 @@ public class DockerRunResponse {
     private DockerRunFinalStatus finalStatus;
     private DockerLogs dockerLogs;
     private int containerExitCode;
+    private Duration executionDuration;
 
     public boolean isSuccessful() {
         return finalStatus == DockerRunFinalStatus.SUCCESS;

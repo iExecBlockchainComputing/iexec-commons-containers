@@ -404,6 +404,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.of(2, ChronoUnit.SECONDS));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -428,6 +429,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -455,6 +457,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isNotZero();
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isNotEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThanOrEqualTo(Duration.ZERO);
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -483,6 +486,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg1);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration())
+                .isGreaterThanOrEqualTo(Duration.of(5, ChronoUnit.SECONDS))
+                .isLessThan(Duration.of(6, ChronoUnit.SECONDS));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -510,6 +516,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance, never()).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -537,6 +544,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -564,6 +572,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -594,6 +603,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.of(2, ChronoUnit.SECONDS));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -1173,6 +1183,101 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(corruptClientInstance.removeContainer(containerName)).isFalse();
     }
     //endregion
+
+    // region getContainerExecutionDuration
+    @Test
+    void shouldGetDurationOnFinishedContainer() throws TimeoutException {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+            final Instant timeoutDate = Instant.now()
+                    .plusMillis(dockerRunRequest.getMaxExecutionTime());
+            dockerClientInstance.waitContainerUntilExitOrTimeout(containerName, timeoutDate);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isPresent();
+            assertThat(executionDuration.get()).isGreaterThanOrEqualTo(Duration.ZERO);
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotStartedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 2 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotFinishedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(60000); // 60s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 60 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    /**
+     * In some cases, Docker can set a finished date prior to the started date.
+     * In that case, we should retrieve a zero-duration.
+     * However, we can't be sure to reproduce it 100% of time,
+     * so this test should only check whether the effective retrieved duration
+     * is between 0 and 1s.
+     */
+    @Test
+    void couldGetZeroDurationOnFastContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(1); // 1s
+        dockerRunRequest.setCmd("sh -c 'wrongCommand'");
+        final String containerName = dockerRunRequest.getContainerName();
+
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isPresent();
+            assertThat(executionDuration.get())
+                    .isGreaterThanOrEqualTo(Duration.ZERO)
+                    .isLessThan(Duration.of(1, ChronoUnit.SECONDS));
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetExecutionDurationForNonExistingContainer() {
+        final Optional<Duration> executionDuration = dockerClientInstance
+                .getContainerExecutionDuration("NonExistingContainer");
+        assertThat(executionDuration).isEmpty();
+    }
+    // endregion
 
     // tools
 

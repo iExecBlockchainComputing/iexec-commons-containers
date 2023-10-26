@@ -440,6 +440,7 @@ public class DockerClientInstance {
         }
 
         getContainerLogs(containerName).ifPresent(dockerRunResponse::setDockerLogs);
+        getContainerExecutionDuration(containerName).ifPresent(dockerRunResponse::setExecutionDuration);
         if (!removeContainer(containerName)) {
             log.warn("Failed to remove container after run [name:{}]", containerName);
         }
@@ -799,6 +800,50 @@ public class DockerClientInstance {
         } catch (Exception e) {
             log.error("Error removing docker container [name:{}]", containerName, e);
             return false;
+        }
+    }
+
+    /**
+     * Retrieves the execution duration of a container.
+     * If the container has not been started yet or has not ended yet,
+     * then return {@link Optional#empty()}.
+     * Otherwise, return the duration.
+     * <p>
+     * /!\ Docker inspection command precision could lead to sub-zero execution duration for fast containers.
+     * In this case, this method return a zero-duration object.
+     *
+     * @param containerName Name of the container to look for execution duration.
+     * @return {@code Optional#empty()} if not started or ended,
+     * the duration otherwise.
+     */
+    public Optional<Duration> getContainerExecutionDuration(String containerName) {
+        try (InspectContainerCmd inspectContainerCmd = getClient().inspectContainerCmd(containerName)) {
+            final InspectContainerResponse.ContainerState state = inspectContainerCmd.exec().getState();
+            final String startedAt = state.getStartedAt();
+            final String defaultTime = "0001-01-01T00:00:00Z";
+            if (StringUtils.isBlank(startedAt) || defaultTime.equals(startedAt)) {
+                log.debug("Container has not been started yet [containerName:{}]", containerName);
+                return Optional.empty();
+            }
+            final String finishedAt = state.getFinishedAt();
+            if (StringUtils.isBlank(finishedAt) || defaultTime.equals(finishedAt)) {
+                log.debug("Container has not been ended yet [containerName:{}]", containerName);
+                return Optional.empty();
+            }
+
+            final Instant startDate = Instant.parse(startedAt);
+            final Instant endDate = Instant.parse(finishedAt);
+
+            final Duration duration = Duration.between(startDate, endDate);
+            if (duration.isNegative()) {
+                // This could mean the command was wrong and has not been correctly executed
+                log.debug("Container has finished faster than Docker precision [containerName:{}]", containerName);
+                return Optional.of(Duration.ZERO);
+            }
+            return Optional.of(duration);
+        } catch (DockerException e) {
+            log.warn("Can't get execution duration of container [containerName:{}]", containerName, e);
+            return Optional.empty();
         }
     }
     //endregion
