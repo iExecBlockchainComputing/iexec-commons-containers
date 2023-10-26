@@ -827,8 +827,8 @@ public class DockerClientInstance {
     }
 
     Optional<Duration> getContainerExecutionDuration(String containerName,
-                                                            String startedAt,
-                                                            String finishedAt) {
+                                                     String startedAt,
+                                                     String finishedAt) {
         final String defaultTime = "0001-01-01T00:00:00Z";
         if (defaultTime.equals(startedAt)) {
             log.debug("Container has not been started yet [containerName:{}]", containerName);
