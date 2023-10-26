@@ -821,12 +821,12 @@ public class DockerClientInstance {
             final InspectContainerResponse.ContainerState state = inspectContainerCmd.exec().getState();
             final String startedAt = state.getStartedAt();
             final String defaultTime = "0001-01-01T00:00:00Z";
-            if (StringUtils.isBlank(startedAt) || defaultTime.equals(startedAt)) {
+            if (defaultTime.equals(startedAt)) {
                 log.debug("Container has not been started yet [containerName:{}]", containerName);
                 return Optional.empty();
             }
             final String finishedAt = state.getFinishedAt();
-            if (StringUtils.isBlank(finishedAt) || defaultTime.equals(finishedAt)) {
+            if (defaultTime.equals(finishedAt)) {
                 log.debug("Container has not been ended yet [containerName:{}]", containerName);
                 return Optional.empty();
             }
