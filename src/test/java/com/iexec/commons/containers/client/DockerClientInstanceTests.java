@@ -22,8 +22,6 @@ import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Device;
-import com.github.dockerjava.api.model.HostConfig;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -1243,39 +1241,25 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         }
     }
 
-    /**
-     * In some cases, Docker can set a finished date prior to the started date.
-     * In that case, we should retrieve a zero-duration.
-     * However, we can't be sure to reproduce it 100% of time,
-     * so this test should only check whether the effective retrieved duration
-     * is between 0 and 1s.
-     */
-    @Test
-    void couldGetZeroDurationOnFastContainer() {
-        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        dockerRunRequest.setMaxExecutionTime(1); // 1s
-        dockerRunRequest.setCmd("sh -c 'wrongCommand'");
-        final String containerName = dockerRunRequest.getContainerName();
-
-        try {
-            dockerClientInstance.createContainer(dockerRunRequest);
-            dockerClientInstance.startContainer(containerName);
-
-            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
-            assertThat(executionDuration).isPresent();
-            assertThat(executionDuration.get())
-                    .isGreaterThanOrEqualTo(Duration.ZERO)
-                    .isLessThan(Duration.of(1, ChronoUnit.SECONDS));
-        } finally {
-            dockerClientInstance.removeContainer(containerName);
-        }
-    }
-
     @Test
     void shouldNotGetExecutionDurationForNonExistingContainer() {
         final Optional<Duration> executionDuration = dockerClientInstance
                 .getContainerExecutionDuration("NonExistingContainer");
         assertThat(executionDuration).isEmpty();
+    }
+
+    @Test
+    void shouldReturnZeroWhenStartedAfterFinished() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        // Docker has seen the `exit` event 0.4 ms before the `started` event
+        final String startedAt = "2023-10-26T12:24:40.163261033Z";
+        final String finishedAt = "2023-10-26T12:24:40.16305078Z";
+        final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(
+                dockerRunRequest.getContainerName(),
+                startedAt,
+                finishedAt
+        );
+        assertThat(executionDuration).contains(Duration.ZERO);
     }
     // endregion
 

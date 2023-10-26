@@ -819,33 +819,39 @@ public class DockerClientInstance {
     public Optional<Duration> getContainerExecutionDuration(String containerName) {
         try (InspectContainerCmd inspectContainerCmd = getClient().inspectContainerCmd(containerName)) {
             final InspectContainerResponse.ContainerState state = inspectContainerCmd.exec().getState();
-            final String startedAt = state.getStartedAt();
-            final String defaultTime = "0001-01-01T00:00:00Z";
-            if (defaultTime.equals(startedAt)) {
-                log.debug("Container has not been started yet [containerName:{}]", containerName);
-                return Optional.empty();
-            }
-            final String finishedAt = state.getFinishedAt();
-            if (defaultTime.equals(finishedAt)) {
-                log.debug("Container has not been ended yet [containerName:{}]", containerName);
-                return Optional.empty();
-            }
-
-            final Instant startDate = Instant.parse(startedAt);
-            final Instant endDate = Instant.parse(finishedAt);
-
-            final Duration duration = Duration.between(startDate, endDate);
-            if (duration.isNegative()) {
-                // This could mean the command was wrong and has not been correctly executed
-                log.debug("Container has finished faster than Docker precision [containerName:{}]", containerName);
-                return Optional.of(Duration.ZERO);
-            }
-            return Optional.of(duration);
+            return getContainerExecutionDuration(containerName, state.getStartedAt(), state.getFinishedAt());
         } catch (DockerException e) {
             log.warn("Can't get execution duration of container [containerName:{}]", containerName, e);
             return Optional.empty();
         }
     }
+
+    Optional<Duration> getContainerExecutionDuration(String containerName,
+                                                            String startedAt,
+                                                            String finishedAt) {
+        final String defaultTime = "0001-01-01T00:00:00Z";
+        if (defaultTime.equals(startedAt)) {
+            log.debug("Container has not been started yet [containerName:{}]", containerName);
+            return Optional.empty();
+        }
+        if (defaultTime.equals(finishedAt)) {
+            log.debug("Container has not been ended yet [containerName:{}]", containerName);
+            return Optional.empty();
+        }
+
+        final Instant startDate = Instant.parse(startedAt);
+        final Instant endDate = Instant.parse(finishedAt);
+
+        final Duration duration = Duration.between(startDate, endDate);
+        if (duration.isNegative()) {
+            // This could mean the command was wrong and has not been correctly executed
+            log.debug("Container has finished faster than Docker precision [containerName:{}]", containerName);
+            return Optional.of(Duration.ZERO);
+        }
+        return Optional.of(duration);
+    }
+
+
     //endregion
 
     //region exec
