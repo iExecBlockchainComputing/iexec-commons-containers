@@ -806,11 +806,11 @@ public class DockerClientInstance {
     /**
      * Retrieves the execution duration of a container.
      * If the container has not been started yet or has not ended yet,
-     * then return {@link Optional#empty()}.
-     * Otherwise, return the duration.
+     * then returns {@link Optional#empty()}.
+     * Otherwise, returns the duration.
      * <p>
      * /!\ Docker inspection command precision could lead to sub-zero execution duration for fast containers.
-     * In this case, this method return a zero-duration object.
+     * In this case, this method returns a zero-duration object.
      *
      * @param containerName Name of the container to look for execution duration.
      * @return {@code Optional#empty()} if not started or ended,

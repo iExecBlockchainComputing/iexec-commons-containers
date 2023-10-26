@@ -402,7 +402,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
-        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.of(2, ChronoUnit.SECONDS));
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
