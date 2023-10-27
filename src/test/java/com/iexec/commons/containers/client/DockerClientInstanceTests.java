@@ -33,7 +33,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Spy;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,9 +45,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @Slf4j
@@ -78,9 +77,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
             DOCKER_IO_CLASSIC_IMAGE, SHORT_CLASSIC_IMAGE, DOCKER_IO_LIBRARY_IMAGE,
             SHORT_LIBRARY_IMAGE, VERY_SHORT_LIBRARY_IMAGE, DOCKER_COM_CLASSIC_IMAGE,
             ALPINE_LATEST);
-
-    @Spy
-    private DockerClient spiedClient = dockerClientInstance.getClient();
 
     @BeforeAll
     static void beforeAll() {
@@ -1091,13 +1087,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.EXITED_STATUS);
         verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance).isContainerActive(containerName);
         // cleaning
         dockerClientInstance.removeContainer(containerName);
     }
 
     @Test
-    void shouldReturnTrueWhenContainerIsNotActive() {
+    void shouldReturnTrueWhenContainerIsNotActive(CapturedOutput output) {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
         String containerName = request.getContainerName();
         request.setCmd("sh -c 'sleep 10 && echo Hello from Docker alpine!'");
@@ -1105,14 +1100,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.createContainer(request);
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.CREATED_STATUS);
-        // Use spied client to verify method calls
-        when(dockerClientInstance.getClient()).thenReturn(spiedClient);
 
         boolean isStopped = dockerClientInstance.stopContainer(containerName);
-        assertThat(isStopped).isTrue();
-        verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance).isContainerActive(containerName);
-        verify(spiedClient, never()).stopContainerCmd(anyString());
+        assertAll(
+                () -> assertThat(isStopped).isTrue(),
+                () -> assertThat(output.getOut()).contains("Docker container is already stopped")
+        );
         // cleaning
         dockerClientInstance.removeContainer(containerName);
     }
@@ -1123,12 +1116,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     @Test
-    void shouldNotStopContainerSinceNotFound() {
-        String containerName = "not-found";
-        boolean isStopped = dockerClientInstance.stopContainer(containerName);
-        assertThat(isStopped).isFalse();
-        verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance, never()).isContainerActive(containerName);
+    void shouldNotStopContainerSinceNotFound(CapturedOutput output) {
+        final boolean isStopped = dockerClientInstance.stopContainer("not-found");
+        assertAll(
+                () -> assertThat(isStopped).isFalse(),
+                () -> assertThat(output.getOut()).contains("No docker container to stop")
+        );
     }
 
     @Test
