@@ -22,8 +22,6 @@ import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Device;
-import com.github.dockerjava.api.model.HostConfig;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -404,6 +402,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -428,6 +427,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -455,6 +455,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isNotZero();
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isNotEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThanOrEqualTo(Duration.ZERO);
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -483,6 +484,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg1);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration())
+                .isGreaterThanOrEqualTo(Duration.ofSeconds(5))
+                .isLessThan(Duration.ofSeconds(6));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -510,6 +514,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance, never()).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -537,6 +542,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -564,6 +570,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -594,6 +601,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -1174,6 +1182,87 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
     //endregion
 
+    // region getContainerExecutionDuration
+    @Test
+    void shouldGetDurationOnFinishedContainer() throws TimeoutException {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+            final Instant timeoutDate = Instant.now()
+                    .plusMillis(dockerRunRequest.getMaxExecutionTime());
+            dockerClientInstance.waitContainerUntilExitOrTimeout(containerName, timeoutDate);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isPresent();
+            assertThat(executionDuration.get()).isGreaterThanOrEqualTo(Duration.ZERO);
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotStartedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 2 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotFinishedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(60000); // 60s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 60 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetExecutionDurationForNonExistingContainer() {
+        final Optional<Duration> executionDuration = dockerClientInstance
+                .getContainerExecutionDuration("NonExistingContainer");
+        assertThat(executionDuration).isEmpty();
+    }
+
+    @Test
+    void shouldReturnZeroWhenStartedAfterFinished() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        // Docker has seen the `exit` event 0.4 ms before the `started` event
+        final String startedAt = "2023-10-26T12:24:40.163261033Z";
+        final String finishedAt = "2023-10-26T12:24:40.16305078Z";
+        final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(
+                dockerRunRequest.getContainerName(),
+                startedAt,
+                finishedAt
+        );
+        assertThat(executionDuration).contains(Duration.ZERO);
+    }
+    // endregion
+
     // tools
 
     @Override
@@ -1184,7 +1273,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     private void pullImageIfNecessary() {
-        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()){
+        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()) {
             dockerClientInstance.pullImage(ALPINE_LATEST);
         }
     }
