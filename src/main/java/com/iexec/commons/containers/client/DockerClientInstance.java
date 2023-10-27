@@ -21,6 +21,7 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -363,19 +364,16 @@ public class DockerClientInstance {
             log.error("Docker image name cannot be blank");
             return false;
         }
-        if (!isImagePresent(imageName)) {
-            log.info("No docker image to remove [name:{}]", imageName);
-            return false;
-        }
-        try (RemoveImageCmd removeImageCmd =
-                     getClient().removeImageCmd(imageName)) {
+        try (RemoveImageCmd removeImageCmd = client.removeImageCmd(imageName)) {
             removeImageCmd.exec();
             log.info("Removed docker image [name:{}]", imageName);
             return true;
+        } catch (NotFoundException e) {
+            log.info("No docker image to remove [name:{}]", imageName);
         } catch (Exception e) {
             log.error("Error removing docker image [name:{}]", imageName, e);
-            return false;
         }
+        return false;
     }
     //endregion
 
@@ -767,24 +765,21 @@ public class DockerClientInstance {
             log.info("Invalid docker container name [name:{}]", containerName);
             return false;
         }
-        if (!isContainerPresent(containerName)) {
-            log.error("No docker container to stop [name:{}]", containerName);
-            return false;
-        }
-        if (!isContainerActive(containerName)) {
-            return true;
-        }
-        try (StopContainerCmd stopContainerCmd =
-                     getClient().stopContainerCmd(containerName)) {
+        try (StopContainerCmd stopContainerCmd = client.stopContainerCmd(containerName)) {
             stopContainerCmd
                     .withTimeout(0) // don't wait
                     .exec();
             log.info("Stopped docker container [name:{}]", containerName);
             return true;
+        } catch (NotFoundException e) {
+            log.error("No docker container to stop [name:{}]", containerName);
+        } catch (NotModifiedException e) {
+            log.info("Docker container is already stopped [name:{}]", containerName);
+            return true;
         } catch (Exception e) {
             log.error("Error stopping docker container [name:{}]", containerName, e);
-            return false;
         }
+        return false;
     }
 
     public synchronized boolean removeContainer(String containerName) {
@@ -792,19 +787,16 @@ public class DockerClientInstance {
             log.error("Invalid docker container name [name:{}]", containerName);
             return false;
         }
-        if (!isContainerPresent(containerName)) {
-            log.info("No docker container to remove [name:{}]", containerName);
-            return false;
-        }
-        try (RemoveContainerCmd removeContainerCmd =
-                     getClient().removeContainerCmd(containerName)) {
+        try (RemoveContainerCmd removeContainerCmd = client.removeContainerCmd(containerName)) {
             removeContainerCmd.exec();
             log.info("Removed docker container [name:{}]", containerName);
             return true;
+        } catch (NotFoundException e) {
+            log.info("No docker container to remove [name:{}]", containerName);
         } catch (Exception e) {
             log.error("Error removing docker container [name:{}]", containerName, e);
-            return false;
         }
+        return false;
     }
 
     /**

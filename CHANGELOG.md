@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2023
 
 ### New Features
+
 - Add `HostConfig` member in `DockerRunRequest`, add related deprecations. (#28)
 - Add `executionDuration` member in `DockerRunResponse`. (#29)
+- Do less Docker API calls when stopping or removing containers or removing images. (#30)
 
 ## [[1.1.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.1.2) 2023-09-27
 
