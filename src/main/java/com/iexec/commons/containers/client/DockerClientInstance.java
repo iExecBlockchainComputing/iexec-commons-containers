@@ -21,6 +21,7 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -68,7 +69,7 @@ public class DockerClientInstance {
     /**
      * Create a new unauthenticated Docker client instance with the specified Docker registry
      * address.
-     * 
+     *
      * @param registryAddress
      * @throws IllegalArgumentException if registry address is blank
      */
@@ -82,9 +83,9 @@ public class DockerClientInstance {
     /**
      * Create a new authenticated Docker client instance. The created client will be
      * authenticated against the provided registry.
-     * 
+     *
      * @param registryAddress e.g. {@code https://index.docker.io/v1/, https://nexus.iex.ec,
-     *                          docker.io, nexus.iex.ec}
+     *                        docker.io, nexus.iex.ec}
      * @param username
      * @param password
      */
@@ -253,9 +254,10 @@ public class DockerClientInstance {
     //endregion
 
     //region image
+
     /**
      * Pull docker image and timeout after 1 minute.
-     * 
+     *
      * @param imageName Name of the image to pull
      * @return true if image is pulled successfully,
      * false otherwise.
@@ -268,7 +270,7 @@ public class DockerClientInstance {
      * Pull docker image and timeout after given duration.
      *
      * @param imageName Name of the image to pull
-     * @param timeout Duration to wait before timeout
+     * @param timeout   Duration to wait before timeout
      * @return true if image is pulled successfully,
      * false otherwise.
      */
@@ -334,6 +336,7 @@ public class DockerClientInstance {
 
     /**
      * Remove "docker.io" and "library" from image name.
+     *
      * @param image
      * @return
      */
@@ -361,29 +364,27 @@ public class DockerClientInstance {
             log.error("Docker image name cannot be blank");
             return false;
         }
-        if (!isImagePresent(imageName)) {
-            log.info("No docker image to remove [name:{}]", imageName);
-            return false;
-        }
-        try (RemoveImageCmd removeImageCmd =
-                    getClient().removeImageCmd(imageName)) {
+        try (RemoveImageCmd removeImageCmd = client.removeImageCmd(imageName)) {
             removeImageCmd.exec();
             log.info("Removed docker image [name:{}]", imageName);
             return true;
+        } catch (NotFoundException e) {
+            log.info("No docker image to remove [name:{}]", imageName);
         } catch (Exception e) {
             log.error("Error removing docker image [name:{}]", imageName, e);
-            return false;
         }
+        return false;
     }
     //endregion
 
     //region container
+
     /**
      * Run a docker container with the specified config.
      * If maxExecutionTime is less or equal to 0, the container
      * will run in detached mode, thus, we return immediately
      * without waiting for it to exit.
-     * 
+     *
      * @param dockerRunRequest config of the run
      * @return a response with metadata and success or failure
      * status.
@@ -440,6 +441,7 @@ public class DockerClientInstance {
         }
 
         getContainerLogs(containerName).ifPresent(dockerRunResponse::setDockerLogs);
+        getContainerExecutionDuration(containerName).ifPresent(dockerRunResponse::setExecutionDuration);
         if (!removeContainer(containerName)) {
             log.warn("Failed to remove container after run [name:{}]", containerName);
         }
@@ -453,12 +455,10 @@ public class DockerClientInstance {
     }
 
     /**
-     * Create docker container and remove existing
-     * duplicate if found.
-     * 
-     * @param dockerRunRequest
-     * @return created container id or an empty
-     * string if a problem occurs
+     * Create docker container and remove existing duplicate if found.
+     *
+     * @param dockerRunRequest Container creation parameters
+     * @return A container ID if a container was successfully created or an empty string otherwise
      */
     public String createContainer(DockerRunRequest dockerRunRequest) {
         return createContainer(dockerRunRequest, true);
@@ -468,11 +468,10 @@ public class DockerClientInstance {
      * Create docker container and choose whether to
      * remove existing duplicate container (if found)
      * or not.
-     * 
-     * @param dockerRunRequest
-     * @param removeDuplicate
-     * @return newly created container id if removeDuplicate is
-     * true, otherwise an empty string.
+     *
+     * @param dockerRunRequest Container creation parameters
+     * @param removeDuplicate  Whether to remove or not an existing container with the same name
+     * @return A container ID if a container was successfully created or an empty string otherwise
      */
     public synchronized String createContainer(DockerRunRequest dockerRunRequest, boolean removeDuplicate) {
         if (dockerRunRequest == null
@@ -493,7 +492,7 @@ public class DockerClientInstance {
             removeContainer(containerName);
         }
         // create network if needed
-        String networkName = dockerRunRequest.getDockerNetwork();
+        String networkName = dockerRunRequest.getHostConfig().getNetworkMode();
         if (StringUtils.isNotBlank(networkName)
                 && StringUtils.isBlank(createNetwork(networkName))) {
             log.error("Failed to create network for the container [name:{}, networkName:{}]",
@@ -524,7 +523,7 @@ public class DockerClientInstance {
      * when creating a container
      *
      * @param dockerRunRequest contains information for creating container
-     * @return a templated HostConfig
+     * @return a populated CreateContainerCmd
      */
     public Optional<CreateContainerCmd> buildCreateContainerCmdFromRunRequest(
             DockerRunRequest dockerRunRequest,
@@ -534,8 +533,8 @@ public class DockerClientInstance {
             return Optional.empty();
         }
         createContainerCmd
-                .withName(dockerRunRequest.getContainerName())
-                .withHostConfig(buildHostConfigFromRunRequest(dockerRunRequest));
+                .withHostConfig(dockerRunRequest.getHostConfig())
+                .withName(dockerRunRequest.getContainerName());
         if (StringUtils.isNotBlank(dockerRunRequest.getCmd())) {
             createContainerCmd.withCmd(
                     ArgsUtils.stringArgsToArrayArgs(dockerRunRequest.getCmd()));
@@ -560,13 +559,9 @@ public class DockerClientInstance {
     }
 
     /**
-     * Some params of the DockerRunRequest need to be passed to the HostConfig
-     * instead of the CreateContainerCmd
-     *
-     * @param dockerRunRequest contains information for setting up host
-     *                         when creating a container
-     * @return a templated HostConfig
+     * @deprecated Use HostConfig field in DockerRunRequest
      */
+    @Deprecated(forRemoval = true)
     public HostConfig buildHostConfigFromRunRequest(DockerRunRequest dockerRunRequest) {
         if (dockerRunRequest == null) {
             return null;
@@ -592,10 +587,10 @@ public class DockerClientInstance {
     /**
      * Check if a container is active. The container is considered active
      * it is in one of the statuses {@code running} or {@code restarting}.
-     * 
-     * @param containerName
+     *
+     * @param containerName name of the container
      * @return true if the container is in one of the active statuses,
-     *         false otherwise.
+     * false otherwise.
      */
     public boolean isContainerActive(String containerName) {
         String currentContainerStatus = getContainerStatus(containerName);
@@ -644,7 +639,7 @@ public class DockerClientInstance {
             return "";
         }
         try (InspectContainerCmd inspectContainerCmd =
-                    getClient().inspectContainerCmd(containerName)) {
+                     getClient().inspectContainerCmd(containerName)) {
             return inspectContainerCmd.exec()
                     .getState()
                     .getStatus();
@@ -659,7 +654,7 @@ public class DockerClientInstance {
             return false;
         }
         try (StartContainerCmd startContainerCmd =
-                    getClient().startContainerCmd(containerName)) {
+                     getClient().startContainerCmd(containerName)) {
             startContainerCmd.exec();
             log.info("Started docker container [name:{}]", containerName);
             return true;
@@ -672,8 +667,9 @@ public class DockerClientInstance {
     /**
      * Waits for full execution of a container (and stops waiting after a
      * particular date)
+     *
      * @param containerName name of the container to wait for
-     * @param timeoutDate waiting is aborted once this date is reached
+     * @param timeoutDate   waiting is aborted once this date is reached
      * @return container's exit code (when relevant)
      */
     public int waitContainerUntilExitOrTimeout(
@@ -759,7 +755,7 @@ public class DockerClientInstance {
 
     /**
      * Stop a running docker container.
-     * 
+     *
      * @param containerName name of the container to stop
      * @return true if the container was successfully stopped or its status
      * is not "running" or "restarting", false otherwise.
@@ -769,24 +765,21 @@ public class DockerClientInstance {
             log.info("Invalid docker container name [name:{}]", containerName);
             return false;
         }
-        if (!isContainerPresent(containerName)) {
-            log.error("No docker container to stop [name:{}]", containerName);
-            return false;
-        }
-        if (!isContainerActive(containerName)) {
-            return true;
-        }
-        try (StopContainerCmd stopContainerCmd =
-                    getClient().stopContainerCmd(containerName)) {
+        try (StopContainerCmd stopContainerCmd = client.stopContainerCmd(containerName)) {
             stopContainerCmd
                     .withTimeout(0) // don't wait
                     .exec();
             log.info("Stopped docker container [name:{}]", containerName);
             return true;
+        } catch (NotFoundException e) {
+            log.error("No docker container to stop [name:{}]", containerName);
+        } catch (NotModifiedException e) {
+            log.info("Docker container is already stopped [name:{}]", containerName);
+            return true;
         } catch (Exception e) {
             log.error("Error stopping docker container [name:{}]", containerName, e);
-            return false;
         }
+        return false;
     }
 
     public synchronized boolean removeContainer(String containerName) {
@@ -794,20 +787,67 @@ public class DockerClientInstance {
             log.error("Invalid docker container name [name:{}]", containerName);
             return false;
         }
-        if (!isContainerPresent(containerName)) {
-            log.info("No docker container to remove [name:{}]", containerName);
-            return false;
-        }
-        try (RemoveContainerCmd removeContainerCmd =
-                    getClient().removeContainerCmd(containerName)) {
+        try (RemoveContainerCmd removeContainerCmd = client.removeContainerCmd(containerName)) {
             removeContainerCmd.exec();
             log.info("Removed docker container [name:{}]", containerName);
             return true;
+        } catch (NotFoundException e) {
+            log.info("No docker container to remove [name:{}]", containerName);
         } catch (Exception e) {
             log.error("Error removing docker container [name:{}]", containerName, e);
-            return false;
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves the execution duration of a container.
+     * If the container has not been started yet or has not ended yet,
+     * then returns {@link Optional#empty()}.
+     * Otherwise, returns the duration.
+     * <p>
+     * /!\ Docker inspection command precision could lead to sub-zero execution duration for fast containers.
+     * In this case, this method returns a zero-duration object.
+     *
+     * @param containerName Name of the container to look for execution duration.
+     * @return {@link  Optional#empty()} if not started or ended,
+     * the duration otherwise.
+     */
+    public Optional<Duration> getContainerExecutionDuration(String containerName) {
+        try (InspectContainerCmd inspectContainerCmd = getClient().inspectContainerCmd(containerName)) {
+            final InspectContainerResponse.ContainerState state = inspectContainerCmd.exec().getState();
+            return getContainerExecutionDuration(containerName, state.getStartedAt(), state.getFinishedAt());
+        } catch (DockerException e) {
+            log.warn("Can't get execution duration of container [containerName:{}]", containerName, e);
+            return Optional.empty();
         }
     }
+
+    Optional<Duration> getContainerExecutionDuration(String containerName,
+                                                     String startedAt,
+                                                     String finishedAt) {
+        final String defaultTime = "0001-01-01T00:00:00Z";
+        if (defaultTime.equals(startedAt)) {
+            log.debug("Container has not been started yet [containerName:{}]", containerName);
+            return Optional.empty();
+        }
+        if (defaultTime.equals(finishedAt)) {
+            log.debug("Container has not been ended yet [containerName:{}]", containerName);
+            return Optional.empty();
+        }
+
+        final Instant startDate = Instant.parse(startedAt);
+        final Instant endDate = Instant.parse(finishedAt);
+
+        final Duration duration = Duration.between(startDate, endDate);
+        if (duration.isNegative()) {
+            // This could mean the command was wrong and has not been correctly executed
+            log.debug("Container has finished faster than Docker precision [containerName:{}]", containerName);
+            return Optional.of(Duration.ZERO);
+        }
+        return Optional.of(duration);
+    }
+
+
     //endregion
 
     //region exec
@@ -852,16 +892,16 @@ public class DockerClientInstance {
     /**
      * Build a new docker client instance. If credentials are provided, an authentication
      * attempt is made to the specified registry.
-     * 
+     *
      * @param registryAddress
      * @param username
      * @param password
      * @return an authenticated docker client if credentials are provided
      * @throws IllegalArgumentException if registry address is blank
-     * @throws DockerException if authentication fails
+     * @throws DockerException          if authentication fails
      */
     private static DockerClient createClient(String registryAddress, String username,
-            String password) throws DockerException, IllegalArgumentException {
+                                             String password) throws DockerException, IllegalArgumentException {
         if (StringUtils.isBlank(registryAddress)) {
             throw new IllegalArgumentException("Registry address must not be blank");
         }

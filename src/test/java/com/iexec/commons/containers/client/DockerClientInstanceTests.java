@@ -22,8 +22,6 @@ import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.DockerException;
-import com.github.dockerjava.api.model.Device;
-import com.github.dockerjava.api.model.HostConfig;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -35,7 +33,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Spy;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -48,9 +45,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @Slf4j
@@ -80,9 +77,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
             DOCKER_IO_CLASSIC_IMAGE, SHORT_CLASSIC_IMAGE, DOCKER_IO_LIBRARY_IMAGE,
             SHORT_LIBRARY_IMAGE, VERY_SHORT_LIBRARY_IMAGE, DOCKER_COM_CLASSIC_IMAGE,
             ALPINE_LATEST);
-
-    @Spy
-    private DockerClient spiedClient = dockerClientInstance.getClient();
 
     @BeforeAll
     static void beforeAll() {
@@ -404,6 +398,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -428,6 +423,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -455,6 +451,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isNotZero();
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isNotEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThanOrEqualTo(Duration.ZERO);
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -483,6 +480,9 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg1);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration())
+                .isGreaterThanOrEqualTo(Duration.ofSeconds(5))
+                .isLessThan(Duration.ofSeconds(6));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -510,6 +510,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance, never()).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -537,6 +538,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance, never())
@@ -564,6 +566,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isEqualTo(-1);
         assertThat(dockerRunResponse.getStdout()).isEmpty();
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isNull();
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -594,6 +597,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerRunResponse.getContainerExitCode()).isZero();
         assertThat(dockerRunResponse.getStdout().trim()).isEqualTo(msg);
         assertThat(dockerRunResponse.getStderr()).isEmpty();
+        assertThat(dockerRunResponse.getExecutionDuration()).isGreaterThan(Duration.ofSeconds(2));
         verify(dockerClientInstance).createContainer(dockerRunRequest);
         verify(dockerClientInstance).startContainer(containerName);
         verify(dockerClientInstance)
@@ -640,7 +644,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     void shouldNotCreateContainerSinceDockerCmdException() {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
         when(corruptClientInstance.isContainerPresent(request.getContainerName())).thenReturn(false);
-        when(corruptClientInstance.createNetwork(request.getDockerNetwork())).thenReturn("networkId");
+        when(corruptClientInstance.createNetwork(DOCKER_NETWORK)).thenReturn("networkId");
         assertThat(corruptClientInstance.createContainer(request)).isEmpty();
     }
 
@@ -672,70 +676,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
     //endregion
 
-    //region buildHostConfigFromRunRequest
-    @Test
-    void shouldBuildHostConfigFromRunRequest() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-
-        HostConfig hostConfig =
-                dockerClientInstance.buildHostConfigFromRunRequest(request);
-        assertThat(hostConfig.getNetworkMode())
-                .isEqualTo(DOCKER_NETWORK);
-        assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(SLASH_IEXEC_IN);
-        assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(SLASH_IEXEC_OUT);
-        assertThat(hostConfig.getDevices()).isEmpty();
-    }
-
-    @Test
-    void shouldBuildHostConfigWithDeviceFromRunRequest() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
-        request.setDevices(List.of(new Device("", DEVICE_PATH_IN_CONTAINER, DEVICE_PATH_ON_HOST)));
-
-        HostConfig hostConfig =
-                dockerClientInstance.buildHostConfigFromRunRequest(request);
-        assertThat(hostConfig.getNetworkMode())
-                .isEqualTo(DOCKER_NETWORK);
-        assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(SLASH_IEXEC_IN);
-        assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(SLASH_IEXEC_OUT);
-        assertThat(hostConfig.getDevices()).isNotNull();
-        assertThat(hostConfig.getDevices()[0].getPathInContainer())
-                .isEqualTo(DEVICE_PATH_IN_CONTAINER);
-        assertThat(hostConfig.getDevices()[0].getPathOnHost())
-                .isEqualTo(DEVICE_PATH_ON_HOST);
-    }
-
-    @Test
-    void shouldBuildHostConfigWithSgxDeviceFromRunRequest() {
-        DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.LEGACY);
-
-        HostConfig hostConfig =
-                dockerClientInstance.buildHostConfigFromRunRequest(request);
-        assertThat(hostConfig.getNetworkMode())
-                .isEqualTo(DOCKER_NETWORK);
-        assertThat((hostConfig.getBinds()[0].getPath()))
-                .isEqualTo(SLASH_IEXEC_IN);
-        assertThat((hostConfig.getBinds()[0].getVolume().getPath()))
-                .isEqualTo(SLASH_IEXEC_OUT);
-        assertThat(hostConfig.getDevices()[0].getcGroupPermissions())
-                .isEqualTo(SgxUtils.SGX_CGROUP_PERMISSIONS);
-        assertThat(hostConfig.getDevices()[0].getPathInContainer())
-                .isEqualTo("/dev/isgx");
-        assertThat(hostConfig.getDevices()[0].getPathOnHost())
-                .isEqualTo("/dev/isgx");
-    }
-
-    @Test
-    void shouldNotBuildHostConfigFromRunRequestSinceNoRequest() {
-        HostConfig hostConfig =
-                dockerClientInstance.buildHostConfigFromRunRequest(null);
-        assertThat(hostConfig).isNull();
-    }
-    //endregion
-
     //region createContainerCmd
     @Test
     void shouldBuildCreateContainerCmdFromRunRequest() {
@@ -753,8 +693,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         CreateContainerCmd actualCreateContainerCmd = oActualCreateContainerCmd.get();
         assertThat(actualCreateContainerCmd.getName())
                 .isEqualTo(request.getContainerName());
-        assertThat(actualCreateContainerCmd.getHostConfig())
-                .isEqualTo(dockerClientInstance.buildHostConfigFromRunRequest(request));
         assertThat(actualCreateContainerCmd.getCmd()).isNull();
         assertThat(actualCreateContainerCmd.getEnv()).isNull();
         assertThat(actualCreateContainerCmd.getExposedPorts()).isEmpty();
@@ -773,8 +711,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         CreateContainerCmd actualCreateContainerCmd = oActualCreateContainerCmd.get();
         assertThat(actualCreateContainerCmd.getName())
                 .isEqualTo(request.getContainerName());
-        assertThat(actualCreateContainerCmd.getHostConfig())
-                .isEqualTo(dockerClientInstance.buildHostConfigFromRunRequest(request));
         assertThat(actualCreateContainerCmd.getCmd())
                 .isEqualTo(ArgsUtils.stringArgsToArrayArgs(request.getCmd()));
         assertThat(actualCreateContainerCmd.getEnv()).isNotNull();
@@ -1151,13 +1087,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.EXITED_STATUS);
         verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance).isContainerActive(containerName);
         // cleaning
         dockerClientInstance.removeContainer(containerName);
     }
 
     @Test
-    void shouldReturnTrueWhenContainerIsNotActive() {
+    void shouldReturnTrueWhenContainerIsNotActive(CapturedOutput output) {
         DockerRunRequest request = getDefaultDockerRunRequest(SgxDriverMode.NONE);
         String containerName = request.getContainerName();
         request.setCmd("sh -c 'sleep 10 && echo Hello from Docker alpine!'");
@@ -1165,14 +1100,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.createContainer(request);
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.CREATED_STATUS);
-        // Use spied client to verify method calls
-        when(dockerClientInstance.getClient()).thenReturn(spiedClient);
 
         boolean isStopped = dockerClientInstance.stopContainer(containerName);
-        assertThat(isStopped).isTrue();
-        verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance).isContainerActive(containerName);
-        verify(spiedClient, never()).stopContainerCmd(anyString());
+        assertAll(
+                () -> assertThat(isStopped).isTrue(),
+                () -> assertThat(output.getOut()).contains("Docker container is already stopped")
+        );
         // cleaning
         dockerClientInstance.removeContainer(containerName);
     }
@@ -1183,12 +1116,12 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     @Test
-    void shouldNotStopContainerSinceNotFound() {
-        String containerName = "not-found";
-        boolean isStopped = dockerClientInstance.stopContainer(containerName);
-        assertThat(isStopped).isFalse();
-        verify(dockerClientInstance, atLeastOnce()).isContainerPresent(containerName);
-        verify(dockerClientInstance, never()).isContainerActive(containerName);
+    void shouldNotStopContainerSinceNotFound(CapturedOutput output) {
+        final boolean isStopped = dockerClientInstance.stopContainer("not-found");
+        assertAll(
+                () -> assertThat(isStopped).isFalse(),
+                () -> assertThat(output.getOut()).contains("No docker container to stop")
+        );
     }
 
     @Test
@@ -1242,6 +1175,87 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
     //endregion
 
+    // region getContainerExecutionDuration
+    @Test
+    void shouldGetDurationOnFinishedContainer() throws TimeoutException {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+            final Instant timeoutDate = Instant.now()
+                    .plusMillis(dockerRunRequest.getMaxExecutionTime());
+            dockerClientInstance.waitContainerUntilExitOrTimeout(containerName, timeoutDate);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isPresent();
+            assertThat(executionDuration.get()).isGreaterThanOrEqualTo(Duration.ZERO);
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotStartedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(5000); // 5s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 2 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetDurationOnNotFinishedContainer() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        dockerRunRequest.setMaxExecutionTime(60000); // 60s
+        final String msg = "Hello world!";
+        dockerRunRequest.setCmd("sh -c 'sleep 60 && echo " + msg + "'");
+        final String containerName = dockerRunRequest.getContainerName();
+        try {
+            dockerClientInstance.createContainer(dockerRunRequest);
+            dockerClientInstance.startContainer(containerName);
+
+            final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(containerName);
+            assertThat(executionDuration).isEmpty();
+        } finally {
+            dockerClientInstance.removeContainer(containerName);
+        }
+    }
+
+    @Test
+    void shouldNotGetExecutionDurationForNonExistingContainer() {
+        final Optional<Duration> executionDuration = dockerClientInstance
+                .getContainerExecutionDuration("NonExistingContainer");
+        assertThat(executionDuration).isEmpty();
+    }
+
+    @Test
+    void shouldReturnZeroWhenStartedAfterFinished() {
+        final DockerRunRequest dockerRunRequest = getDefaultDockerRunRequest(SgxDriverMode.NONE);
+        // Docker has seen the `exit` event 0.4 ms before the `started` event
+        final String startedAt = "2023-10-26T12:24:40.163261033Z";
+        final String finishedAt = "2023-10-26T12:24:40.16305078Z";
+        final Optional<Duration> executionDuration = dockerClientInstance.getContainerExecutionDuration(
+                dockerRunRequest.getContainerName(),
+                startedAt,
+                finishedAt
+        );
+        assertThat(executionDuration).contains(Duration.ZERO);
+    }
+    // endregion
+
     // tools
 
     @Override
@@ -1252,7 +1266,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     private void pullImageIfNecessary() {
-        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()){
+        if (dockerClientInstance.getImageId(ALPINE_LATEST).isEmpty()) {
             dockerClientInstance.pullImage(ALPINE_LATEST);
         }
     }
