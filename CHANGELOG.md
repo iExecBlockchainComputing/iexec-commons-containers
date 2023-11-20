@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Dependency Upgrades
 
 - Upgrade to `jenkins-library` 2.7.4. (#33)
+- Upgrade to `docker-java` 3.3.4. (#34)
 
 ## [[1.2.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.0) 2023-11-06
 
