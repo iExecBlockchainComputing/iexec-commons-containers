@@ -11,10 +11,10 @@ group = 'com.iexec.commons'
 ext {
     gitBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
 
-    dockerJavaVersion = '3.2.12'
+    dockerJavaVersion = '3.3.4'
 }
 
-if (gitBranch != 'main' && gitBranch != 'master' && ! (gitBranch ==~ '(release|hotfix|support)/.*')) {
+if (gitBranch != 'main' && gitBranch != 'master' && !(gitBranch ==~ '(release|hotfix|support)/.*')) {
     version += '-NEXT-SNAPSHOT'
 }
 
@@ -37,7 +37,7 @@ dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:2.7.14')
 
     // docker
-    implementation "com.github.docker-java:docker-java:${dockerJavaVersion}"
+    api "com.github.docker-java:docker-java:${dockerJavaVersion}"
     // Using zerodep until docker client stops blocking after having called
     // listContainersCmd() over httpclient5
     implementation "com.github.docker-java:docker-java-transport-zerodep:${dockerJavaVersion}"
