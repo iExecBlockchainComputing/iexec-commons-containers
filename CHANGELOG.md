@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Dependency Upgrades
 
+- Upgrade to Spring Boot 2.7.17. (#35)
 - Upgrade to `jenkins-library` 2.7.4. (#33)
 - Upgrade to `docker-java` 3.3.4. (#34)
 
