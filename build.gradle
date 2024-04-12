@@ -47,19 +47,6 @@ dependencies {
 
     // args utils
     implementation 'org.apache.maven.shared:maven-shared-utils:3.4.2'
-
-    // tests
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation 'org.mockito:mockito-junit-jupiter'
-    testImplementation 'org.assertj:assertj-core'
-    // spring-boot-test to capture test outputs
-    testImplementation 'org.springframework.boot:spring-boot-test'
-    // spring-test for ReflectionTestUtils
-    testImplementation 'org.springframework:spring-test'
-    testImplementation 'org.awaitility:awaitility'
-    // logback
-    testRuntimeOnly 'ch.qos.logback:logback-classic'
 }
 
 java {
@@ -76,9 +63,28 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += '-Xlint:all'
 }
 
+testing {
+    suites {
+        test {
+            useJUnitJupiter()
+            dependencies {
+                implementation 'org.junit.jupiter:junit-jupiter'
+                implementation 'org.mockito:mockito-junit-jupiter'
+                implementation 'org.assertj:assertj-core'
+                // spring-boot-test to capture test outputs
+                implementation 'org.springframework.boot:spring-boot-test'
+                // spring-test for ReflectionTestUtils
+                implementation 'org.springframework:spring-test'
+                implementation 'org.awaitility:awaitility'
+                // logback
+                runtimeOnly 'ch.qos.logback:logback-classic'
+            }
+        }
+    }
+}
+
 tasks.withType(Test).configureEach {
     finalizedBy jacocoTestReport
-    useJUnitPlatform()
 }
 
 test {
