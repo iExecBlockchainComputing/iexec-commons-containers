@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Configure Gradle JVM Test Suite Plugin. (#38)
 
+### Dependency Upgrades
+
+- Upgrade to Gradle 8.7. (#39)
+
 ## [[1.2.1]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.1) 2023-12-19
 
 ### Dependency Upgrades
