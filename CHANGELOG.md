@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[1.2.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.2) 2024-06-17
+
+### Quality
+
+- Configure Gradle JVM Test Suite Plugin. (#38)
+
+### Dependency Upgrades
+
+- Upgrade to Gradle 8.7. (#39)
+- Upgrade to Spring Boot 2.7.18. (#40)
+
 ## [[1.2.1]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.1) 2023-12-19
 
 ### Dependency Upgrades
