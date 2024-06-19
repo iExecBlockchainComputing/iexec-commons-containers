@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2024
 
+## [[1.2.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.2) 2024-06-17
+
 ### Quality
 
 - Configure Gradle JVM Test Suite Plugin. (#38)
