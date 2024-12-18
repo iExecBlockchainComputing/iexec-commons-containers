@@ -11,7 +11,7 @@ group = 'com.iexec.commons'
 ext {
     gitBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
 
-    dockerJavaVersion = '3.3.4'
+    dockerJavaVersion = '3.4.1'
 }
 
 if (gitBranch != 'main' && gitBranch != 'master' && !(gitBranch ==~ '(release|hotfix|support)/.*')) {
