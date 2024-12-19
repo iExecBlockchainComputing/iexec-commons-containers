@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[1.2.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.3) 2024-12-19
+
+### Dependency Upgrades
+
+- Upgrade to Gradle 8.10.2. (#43)
+- Upgrade to `docker-java` 3.4.1. (#44)
+
 ## [[1.2.2]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.2) 2024-06-17
 
 ### Quality
