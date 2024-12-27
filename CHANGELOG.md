@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [[NEXT]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/vNEXT) 2025
 
+### Quality
+
+- Migrate to Jakarta EE APIs. (#47)
+
+### Dependency Upgrades
+
+- Upgrade Spring Boot to `3.0.13`. (#47)
+
 ## [[1.2.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.3) 2024-12-19
 
 ### Dependency Upgrades
