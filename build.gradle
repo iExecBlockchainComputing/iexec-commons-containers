@@ -34,7 +34,7 @@ repositories {
 // 'api' configuration allows to expose dependencies with 'compile' scope in pom
 // 'implementation' configuration allows to expose dependencies with 'runtime' scope in pom
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:2.7.18')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.0.13')
 
     // docker
     api "com.github.docker-java:docker-java:${dockerJavaVersion}"
@@ -53,8 +53,8 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withJavadocJar()
     withSourcesJar()
 }
