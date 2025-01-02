@@ -6,11 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Quality
 
+- Update source and target compatibility to Java 17. (#47)
 - Migrate to Jakarta EE APIs. (#47)
 
 ### Dependency Upgrades
 
-- Upgrade Spring Boot to `3.0.13`. (#47)
+- Upgrade to Spring Boot `3.0.13`. (#47)
 
 ## [[1.2.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.3) 2024-12-19
 
