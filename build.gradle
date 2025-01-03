@@ -68,14 +68,11 @@ testing {
         test {
             useJUnitJupiter()
             dependencies {
-                implementation 'org.junit.jupiter:junit-jupiter'
-                implementation 'org.mockito:mockito-junit-jupiter'
                 implementation 'org.assertj:assertj-core'
-                // spring-boot-test to capture test outputs
-                implementation 'org.springframework.boot:spring-boot-test'
+                implementation 'org.awaitility:awaitility'
+                implementation 'org.mockito:mockito-junit-jupiter'
                 // spring-test for ReflectionTestUtils
                 implementation 'org.springframework:spring-test'
-                implementation 'org.awaitility:awaitility'
                 // logback
                 runtimeOnly 'ch.qos.logback:logback-classic'
             }
