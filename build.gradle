@@ -73,6 +73,8 @@ testing {
                 implementation 'org.mockito:mockito-junit-jupiter'
                 // spring-test for ReflectionTestUtils
                 implementation 'org.springframework:spring-test'
+                // spring-boot-test to capture test outputs
+                implementation 'org.springframework.boot:spring-boot-test'
                 // logback
                 runtimeOnly 'ch.qos.logback:logback-classic'
             }
