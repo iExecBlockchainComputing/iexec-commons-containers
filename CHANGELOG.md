@@ -6,8 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Quality
 
-- Update source and target compatibility to Java 17. (#47)
-- Migrate to Jakarta EE APIs. (#47)
+- Upgrade source and target compatibility to Java 17. (#47)
 
 ### Dependency Upgrades
 
