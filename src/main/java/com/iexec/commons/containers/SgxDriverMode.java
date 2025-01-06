@@ -19,7 +19,6 @@ package com.iexec.commons.containers;
 import jakarta.annotation.Nonnull;
 import lombok.Getter;
 
-
 /**
  * List of supported SGX drivers and devices.
  * <p>
