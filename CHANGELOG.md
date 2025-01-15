@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Upgrade source and target compatibility to Java 17. (#47)
 
+### Breaking API changes
+
+- Remove DockerRunRequest deprecated fields replaced with HostConfig field. (#48)
+
 ### Dependency Upgrades
 
 - Upgrade to Spring Boot `3.0.13`. (#47)

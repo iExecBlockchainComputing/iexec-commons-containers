@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2025 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class DockerClientInstance {
      * Create a new unauthenticated Docker client instance with the specified Docker registry
      * address.
      *
-     * @param registryAddress
+     * @param registryAddress Docker registry address
      * @throws IllegalArgumentException if registry address is blank
      */
     DockerClientInstance(String registryAddress) {
@@ -84,10 +84,9 @@ public class DockerClientInstance {
      * Create a new authenticated Docker client instance. The created client will be
      * authenticated against the provided registry.
      *
-     * @param registryAddress e.g. {@code https://index.docker.io/v1/, https://nexus.iex.ec,
-     *                        docker.io, nexus.iex.ec}
-     * @param username
-     * @param password
+     * @param registryAddress Docker registry address
+     * @param username        Docker registry username
+     * @param password        Docker registry password
      */
     DockerClientInstance(String registryAddress, String username, String password) {
         if (StringUtils.isBlank(registryAddress)) {
@@ -271,8 +270,7 @@ public class DockerClientInstance {
      *
      * @param imageName Name of the image to pull
      * @param timeout   Duration to wait before timeout
-     * @return true if image is pulled successfully,
-     * false otherwise.
+     * @return true if image is pulled successfully, false otherwise.
      */
     public boolean pullImage(String imageName, Duration timeout) {
         if (StringUtils.isBlank(imageName)) {
@@ -556,28 +554,6 @@ public class DockerClientInstance {
             createContainerCmd.withWorkingDir(dockerRunRequest.getWorkingDir());
         }
         return Optional.of(createContainerCmd);
-    }
-
-    /**
-     * @deprecated Use HostConfig field in DockerRunRequest
-     */
-    @Deprecated(forRemoval = true)
-    public HostConfig buildHostConfigFromRunRequest(DockerRunRequest dockerRunRequest) {
-        if (dockerRunRequest == null) {
-            return null;
-        }
-        HostConfig hostConfig = HostConfig.newHostConfig();
-        final String dockerNetworkName = dockerRunRequest.getDockerNetwork();
-        if (StringUtils.isNotBlank(dockerNetworkName)) {
-            hostConfig.withNetworkMode(dockerNetworkName);
-        }
-        final List<String> binds = dockerRunRequest.getBinds();
-        if (!binds.isEmpty()) {
-            hostConfig.withBinds(Binds.fromPrimitive(binds.toArray(new String[0])));
-        }
-        final List<Device> devices = dockerRunRequest.getDevices();
-        hostConfig.withDevices(devices);
-        return hostConfig;
     }
 
     public boolean isContainerPresent(String containerName) {
