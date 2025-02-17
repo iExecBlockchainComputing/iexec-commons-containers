@@ -14,7 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Dependency Upgrades
 
-- Upgrade to Spring Boot `3.0.13`. (#47)
+- Upgrade to Java 17. (#47)
+- Upgrade to Spring Boot 3.3.8. (#49)
 
 ## [[1.2.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.3) 2024-12-19
 
