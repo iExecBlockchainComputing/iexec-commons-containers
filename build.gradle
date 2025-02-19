@@ -34,7 +34,7 @@ repositories {
 // 'api' configuration allows to expose dependencies with 'compile' scope in pom
 // 'implementation' configuration allows to expose dependencies with 'runtime' scope in pom
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:3.0.13')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.3.8')
 
     // docker
     api "com.github.docker-java:docker-java:${dockerJavaVersion}"
@@ -60,7 +60,8 @@ java {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs += '-Xlint:all'
+    options.compilerArgs.add('-parameters')
+    options.compilerArgs.add('-Xlint:all')
 }
 
 testing {
