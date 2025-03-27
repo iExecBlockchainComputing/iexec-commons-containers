@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [[2.0.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/2.0.0) 2025-03-27
+## [[2.0.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v2.0.0) 2025-03-27
 
 ### Quality
 
