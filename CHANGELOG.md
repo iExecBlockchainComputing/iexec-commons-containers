@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [[2.0.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v2.0.0) 2025-03-27
+
+### Quality
+
+- Upgrade source and target compatibility to Java 17. (#47)
+
+### Breaking API changes
+
+- Remove DockerRunRequest deprecated fields replaced with HostConfig field. (#48)
+
+### Dependency Upgrades
+
+- Upgrade to Java 17. (#47)
+- Upgrade to Spring Boot 3.3.8. (#49)
+
 ## [[1.2.3]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v1.2.3) 2024-12-19
 
 ### Dependency Upgrades

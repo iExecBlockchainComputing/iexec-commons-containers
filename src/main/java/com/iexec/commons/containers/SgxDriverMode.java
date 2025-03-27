@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2022-2025 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 package com.iexec.commons.containers;
 
+import jakarta.annotation.Nonnull;
 import lombok.Getter;
-
-import javax.annotation.Nonnull;
 
 /**
  * List of supported SGX drivers and devices.
@@ -38,7 +37,7 @@ import javax.annotation.Nonnull;
  * before updating this enum.
  *
  * @see <a href="https://github.com/gramineproject/gramine/blob/2ad54dd52426da115261a26244c10110840f9c83/tools/sgx/is-sgx-available/is_sgx_available.cpp#L172">
- *      Gramine SGX drivers support</a>
+ * Gramine SGX drivers support</a>
  */
 @Getter
 public enum SgxDriverMode {
