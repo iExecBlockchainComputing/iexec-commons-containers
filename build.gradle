@@ -9,12 +9,11 @@ plugins {
 group = 'com.iexec.commons'
 
 ext {
-    gitBranch = 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
-
+    gitTag = 'git tag --points-at HEAD'.execute().text.trim()
     dockerJavaVersion = '3.4.1'
 }
 
-if (gitBranch != 'main' && gitBranch != 'master' && !(gitBranch ==~ '(release|hotfix|support)/.*')) {
+if (gitTag.isEmpty()) {
     version += '-NEXT-SNAPSHOT'
 }
 
