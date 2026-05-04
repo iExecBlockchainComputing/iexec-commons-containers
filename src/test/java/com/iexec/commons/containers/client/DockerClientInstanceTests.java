@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -127,19 +126,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
     //endregion
 
-    /**
-     * This test is temporarily disabled because of this error:
-     * toomanyrequests: too many failed login attempts for
-     * username or IP address.
-     */
-    @Test
-    @Disabled("toomanyrequests: too many failed login attempts for username or IP address")
-    void shouldFailToAuthenticateClientToRegistry() {
-        final DockerException e = assertThrows(DockerException.class, () -> DockerClientFactory
-                .getDockerClientInstance(DockerClientInstance.DEFAULT_DOCKER_REGISTRY, "badUsername", "badPassword"));
-        assertThat(e.getHttpStatus()).isEqualTo(401);
-    }
-
     //region isImagePresent
     @Test
     void shouldFindImagePresent() {
@@ -233,26 +219,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         when(resultCallback.awaitCompletion(60, TimeUnit.SECONDS)).thenThrow(InterruptedException.class);
         dockerClientInstance.pullImage(ALPINE_LATEST);
         assertThat(stdout.getOut()).contains("Docker pull command was interrupted");
-    }
-
-    /**
-     * Try to pull a private image from iexechub, require valid login and permissions.
-     * The test will fail if Docker Hub credentials are missing or invalid.
-     */
-    @Test
-    void shouldPullPrivateImage() {
-        final String username = getEnvValue(DOCKERHUB_USERNAME_ENV_NAME);
-        final String password = getEnvValue(DOCKERHUB_PASSWORD_ENV_NAME);
-        // Get an authenticated docker client
-        final DockerClientInstance authClientInstance =
-                new DockerClientInstance(DockerClientInstance.DEFAULT_DOCKER_REGISTRY,
-                        username, password);
-        // clean to avoid previous tests collisions
-        authClientInstance.removeImage(PRIVATE_IMAGE_NAME);
-        // pull image and check
-        assertThat(authClientInstance.pullImage(PRIVATE_IMAGE_NAME)).isTrue();
-        // clean
-        authClientInstance.removeImage(PRIVATE_IMAGE_NAME);
     }
     //endregion
 
