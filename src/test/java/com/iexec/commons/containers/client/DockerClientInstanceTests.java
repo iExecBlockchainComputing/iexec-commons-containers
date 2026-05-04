@@ -21,7 +21,6 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.DockerException;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -67,7 +66,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     private static final String BLABLA_LATEST = "blabla:latest";
     private static final String DOCKERHUB_USERNAME_ENV_NAME = "DOCKER_IO_USER";
     private static final String DOCKERHUB_PASSWORD_ENV_NAME = "DOCKER_IO_PASSWORD";
-    private static final String PRIVATE_IMAGE_NAME = "iexechub/private-image:alpine-3.13";
 
     private static final List<String> usedRandomNames = new ArrayList<>();
     private static final List<String> usedImages = List.of(
