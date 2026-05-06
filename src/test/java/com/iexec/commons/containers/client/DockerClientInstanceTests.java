@@ -1222,7 +1222,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
     @Override
     String getRandomString() {
-        final String random = RandomStringUtils.randomAlphanumeric(20);
+        final String random = RandomStringUtils.secure().nextAlphanumeric(20);
         usedRandomNames.add(random);
         return random;
     }
