@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.mockito.Spy;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -70,24 +69,25 @@ abstract class AbstractDockerTests {
     /**
      * Creates a DockerClient instance trying to communicate with a docker server on a non-existing endpoint.
      * Every single call to this instance will provoke an exception.
+     *
      * @return The faulty DockerClient instance
      */
     DockerClientInstance getCorruptInstance() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+        final DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
                 .withDockerHost("tcp://localhost:11111")
                 .build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
+        final DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
                 .sslConfig(config.getSSLConfig())
                 .build();
-        DockerClient corruptDockerClient = DockerClientImpl.getInstance(config, httpClient);
-        DockerClientInstance dockerClientInstance = new DockerClientInstance();
-        ReflectionTestUtils.setField(dockerClientInstance, "client", corruptDockerClient);
-        return dockerClientInstance;
+        final DockerClient corruptDockerClient = DockerClientImpl.getInstance(config, httpClient);
+        final DockerClientInstance corruptDockerClientInstance = new DockerClientInstance();
+        ReflectionTestUtils.setField(corruptDockerClientInstance, "client", corruptDockerClient);
+        return corruptDockerClientInstance;
     }
 
     DockerRunRequest getDefaultDockerRunRequest(SgxDriverMode sgxDriverMode) {
-        HostConfig hostConfig = HostConfig.newHostConfig()
+        final HostConfig hostConfig = HostConfig.newHostConfig()
                 .withBinds(Bind.parse(SLASH_IEXEC_IN + ":" + SLASH_IEXEC_OUT))
                 .withNetworkMode(DOCKER_NETWORK);
         return DockerRunRequest.builder()
@@ -113,7 +113,7 @@ abstract class AbstractDockerTests {
     }
 
     String getRandomString() {
-        return RandomStringUtils.randomAlphanumeric(20);
+        return RandomStringUtils.secure().nextAlphanumeric(20);
     }
 
 }
