@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0](https://github.com/iExecBlockchainComputing/iexec-commons-containers/compare/v2.0.0...v2.1.0) (2026-06-16)
+
+
+### Features
+
+* upgrade to Java 21 ([#58](https://github.com/iExecBlockchainComputing/iexec-commons-containers/issues/58)) ([f17812f](https://github.com/iExecBlockchainComputing/iexec-commons-containers/commit/f17812fd20041f4608dc3d8996b07091646c4f23))
+* upgrade to Spring Boot 3.5.8 ([#56](https://github.com/iExecBlockchainComputing/iexec-commons-containers/issues/56)) ([64c5615](https://github.com/iExecBlockchainComputing/iexec-commons-containers/commit/64c56151ebddbe33c508625901b05dfc9e22b9d2))
+
 ## [[2.0.0]](https://github.com/iExecBlockchainComputing/iexec-commons-containers/releases/tag/v2.0.0) 2025-03-27
 
 ### Quality
