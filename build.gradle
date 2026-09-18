@@ -20,13 +20,6 @@ if (gitTag.isEmpty()) {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url = 'https://docker-regis-adm.iex.ec/repository/maven-public/'
-        credentials {
-            username = nexusUser
-            password = nexusPassword
-        }
-    }
 }
 
 // java-library plugin defines 'api' configuration
@@ -116,10 +109,10 @@ publishing {
     repositories {
         maven {
             credentials {
-                username = nexusUser
-                password = nexusPassword
+                username = mvnRepositoryUsername
+                password = mvnRepositoryPassword
             }
-            url = project.hasProperty('nexusUrl') ? nexusUrl : ''
+            url = project.hasProperty('mvnRepositoryUrl') ? mvnRepositoryUrl : ''
         }
     }
 }
