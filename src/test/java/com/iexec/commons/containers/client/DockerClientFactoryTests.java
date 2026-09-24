@@ -56,7 +56,8 @@ class DockerClientFactoryTests {
         final String username = "dockerIoUsername";
         final String password = "dockerIoPassword";
         final DockerClient dockerClient = mock(DockerClient.class);
-        when(dockerClient.authCmd()).thenReturn(mock(AuthCmd.class));
+        final AuthCmd authCmd = mock(AuthCmd.class);
+        when(dockerClient.authCmd()).thenReturn(authCmd);
 
         try (final MockedStatic<DockerClientImpl> dockerClientImpl = mockStatic(DockerClientImpl.class)) {
             dockerClientImpl.when(() -> DockerClientImpl.getInstance(any(), any(DockerHttpClient.class)))

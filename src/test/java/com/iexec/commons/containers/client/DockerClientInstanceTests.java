@@ -118,7 +118,8 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         final String dockerIoUsername = "dockerIoUsername";
         final String dockerIoPassword = "dockerIoPassword";
         final DockerClient dockerClient = mock(DockerClient.class);
-        when(dockerClient.authCmd()).thenReturn(mock(AuthCmd.class));
+        final AuthCmd authCmd = mock(AuthCmd.class);
+        when(dockerClient.authCmd()).thenReturn(authCmd);
         final ArgumentCaptor<DefaultDockerClientConfig> configCaptor =
                 ArgumentCaptor.forClass(DefaultDockerClientConfig.class);
 
