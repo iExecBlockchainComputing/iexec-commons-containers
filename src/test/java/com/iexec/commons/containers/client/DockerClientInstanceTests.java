@@ -17,10 +17,14 @@
 package com.iexec.commons.containers.client;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.AuthCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.transport.DockerHttpClient;
 import com.iexec.commons.containers.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -31,6 +35,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -43,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,8 +71,6 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     // other
     private static final String ALPINE_BLABLA = "alpine:blabla";
     private static final String BLABLA_LATEST = "blabla:latest";
-    private static final String DOCKERHUB_USERNAME_ENV_NAME = "DOCKER_IO_USER";
-    private static final String DOCKERHUB_PASSWORD_ENV_NAME = "DOCKER_IO_PASSWORD";
 
     private static final List<String> usedRandomNames = new ArrayList<>();
     private static final List<String> usedImages = List.of(
@@ -110,17 +115,59 @@ class DockerClientInstanceTests extends AbstractDockerTests {
 
     @Test
     void shouldGetAuthenticatedClientWithDockerIoRegistry() {
-        final String dockerIoUsername = getEnvValue(DOCKERHUB_USERNAME_ENV_NAME);
-        final String dockerIoPassword = getEnvValue(DOCKERHUB_PASSWORD_ENV_NAME);
-        DockerClientInstance instance = new DockerClientInstance(
-                DockerClientInstance.DEFAULT_DOCKER_REGISTRY,
-                dockerIoUsername, dockerIoPassword);
-        assertThat(instance.getClient().authConfig().getRegistryAddress())
+        final String dockerIoUsername = "dockerIoUsername";
+        final String dockerIoPassword = "dockerIoPassword";
+        final DockerClient dockerClient = mock(DockerClient.class);
+        when(dockerClient.authCmd()).thenReturn(mock(AuthCmd.class));
+        final ArgumentCaptor<DefaultDockerClientConfig> configCaptor =
+                ArgumentCaptor.forClass(DefaultDockerClientConfig.class);
+
+        try (final MockedStatic<DockerClientImpl> dockerClientImpl = mockStatic(DockerClientImpl.class)) {
+            dockerClientImpl.when(() -> DockerClientImpl.getInstance(configCaptor.capture(), any(DockerHttpClient.class)))
+                    .thenReturn(dockerClient);
+
+            final DockerClientInstance instance = new DockerClientInstance(
+                    DockerClientInstance.DEFAULT_DOCKER_REGISTRY,
+                    dockerIoUsername, dockerIoPassword);
+
+            assertThat(instance.getClient()).isSameAs(dockerClient);
+        }
+
+        final DefaultDockerClientConfig config = configCaptor.getValue();
+        assertThat(config.getRegistryUrl())
                 .isEqualTo(DockerClientInstance.DEFAULT_DOCKER_REGISTRY);
-        assertThat(instance.getClient().authConfig().getUsername())
-                .isEqualTo(dockerIoUsername);
-        assertThat(instance.getClient().authConfig().getPassword())
-                .isEqualTo(dockerIoPassword);
+        assertThat(config.getRegistryUsername()).isEqualTo(dockerIoUsername);
+        assertThat(config.getRegistryPassword()).isEqualTo(dockerIoPassword);
+        verify(dockerClient).authCmd();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldRejectAuthenticatedClientWithBlankRegistryAddress(String registryAddress) {
+        assertThatThrownBy(() -> new DockerClientInstance(registryAddress, "user", "password"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Docker registry address must not be blank");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldRejectAuthenticatedClientWithBlankUsername(String username) {
+        assertThatThrownBy(() -> new DockerClientInstance(
+                DockerClientInstance.DEFAULT_DOCKER_REGISTRY, username, "password"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Docker registry username must not be blank");
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldRejectAuthenticatedClientWithBlankPassword(String password) {
+        assertThatThrownBy(() -> new DockerClientInstance(
+                DockerClientInstance.DEFAULT_DOCKER_REGISTRY, "user", password))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Docker registry password must not be blank");
     }
     //endregion
 

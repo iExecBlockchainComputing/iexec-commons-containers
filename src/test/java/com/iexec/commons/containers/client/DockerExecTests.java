@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,10 @@ class DockerExecTests extends AbstractDockerTests {
         future.cancel(true);
         assertThat(future.isCancelled()).isTrue();
         assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
-        assertThat(output.getOut()).contains("Docker exec command was interrupted", "java.lang.InterruptedException: null");
+        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
+                assertThat(output.getOut()).contains(
+                        "Docker exec command was interrupted",
+                        "java.lang.InterruptedException: null"));
         dockerClientInstance.stopAndRemoveContainer(containerName);
     }
 
