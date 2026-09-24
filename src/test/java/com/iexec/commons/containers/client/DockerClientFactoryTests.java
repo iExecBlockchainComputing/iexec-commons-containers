@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,19 @@
 
 package com.iexec.commons.containers.client;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.AuthCmd;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.transport.DockerHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class DockerClientFactoryTests {
-
-    private static final String DOCKER_IO_USER = "DOCKER_IO_USER";
-    private static final String DOCKER_IO_PASSWORD = "DOCKER_IO_PASSWORD";
 
     @BeforeEach
     void beforeEach() {
@@ -48,20 +52,22 @@ class DockerClientFactoryTests {
 
     @Test
     void shouldGetTheSameAuthenticatedClient() {
-        String dockerIoUsername = getEnvValue(DOCKER_IO_USER);
-        String dockerIoPassword = getEnvValue(DOCKER_IO_PASSWORD);
-        DockerClientInstance instance1 = DockerClientFactory.getDockerClientInstance(
-                DockerClientInstance.DEFAULT_DOCKER_REGISTRY, dockerIoUsername, dockerIoPassword);
-        DockerClientInstance instance2 = DockerClientFactory.getDockerClientInstance(
-                DockerClientInstance.DEFAULT_DOCKER_REGISTRY, dockerIoUsername, dockerIoPassword);
-        assertThat(instance2).isSameAs(instance1);
-    }
+        final String registryAddress = DockerClientInstance.DEFAULT_DOCKER_REGISTRY;
+        final String username = "dockerIoUsername";
+        final String password = "dockerIoPassword";
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final AuthCmd authCmd = mock(AuthCmd.class);
+        when(dockerClient.authCmd()).thenReturn(authCmd);
 
-    private String getEnvValue(String envVarName) {
-        return System.getenv(envVarName) != null ?
-                //Intellij envvar injection
-                System.getenv(envVarName) :
-                //gradle test -DdockerhubPassword=xxx
-                System.getProperty(envVarName);
+        try (final MockedStatic<DockerClientImpl> dockerClientImpl = mockStatic(DockerClientImpl.class)) {
+            dockerClientImpl.when(() -> DockerClientImpl.getInstance(any(), any(DockerHttpClient.class)))
+                    .thenReturn(dockerClient);
+
+            final DockerClientInstance instance1 = DockerClientFactory.getDockerClientInstance(
+                    registryAddress, username, password);
+            final DockerClientInstance instance2 = DockerClientFactory.getDockerClientInstance(
+                    registryAddress, username, password);
+            assertThat(instance2).isSameAs(instance1);
+        }
     }
 }
