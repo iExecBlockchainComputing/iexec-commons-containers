@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1](https://github.com/iExecBlockchainComputing/iexec-commons-containers/compare/v2.1.0...v2.1.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* fix containerName guard on stopContainer, improve unit tests ([#66](https://github.com/iExecBlockchainComputing/iexec-commons-containers/issues/66)) ([ed97b29](https://github.com/iExecBlockchainComputing/iexec-commons-containers/commit/ed97b295004fc2d2d8c172a3a27c749b3f51ff5a))
+* upgrade to Spring Boot 3.5.16 ([6d8f7aa](https://github.com/iExecBlockchainComputing/iexec-commons-containers/commit/6d8f7aa89621226b7f11cd7dabc438d3168be785))
+
 ## [2.1.0](https://github.com/iExecBlockchainComputing/iexec-commons-containers/compare/v2.0.0...v2.1.0) (2026-09-18)
 
 
