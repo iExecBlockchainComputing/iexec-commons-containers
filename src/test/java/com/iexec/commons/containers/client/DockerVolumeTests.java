@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package com.iexec.commons.containers.client;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,9 +35,11 @@ class DockerVolumeTests extends AbstractDockerTests {
         dockerClientInstance.removeVolume(volumeName);
     }
 
-    @Test
-    void shouldNotCreateVolumeSinceEmptyName() {
-        assertThat(dockerClientInstance.createVolume("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotCreateVolumeSinceBlankName(final String volumeName) {
+        assertThat(dockerClientInstance.createVolume(volumeName)).isFalse();
     }
 
     @Test
@@ -62,9 +67,11 @@ class DockerVolumeTests extends AbstractDockerTests {
         dockerClientInstance.removeVolume(volumeName);
     }
 
-    @Test
-    void shouldNotFindVolumePresentSinceEmptyName() {
-        assertThat(dockerClientInstance.isVolumePresent("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotFindVolumePresentSinceBlankName(final String volumeName) {
+        assertThat(dockerClientInstance.isVolumePresent(volumeName)).isFalse();
     }
 
     @Test
@@ -82,9 +89,11 @@ class DockerVolumeTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.isVolumePresent(volumeName)).isFalse();
     }
 
-    @Test
-    void shouldNotRemoveVolumeSinceEmptyName() {
-        assertThat(dockerClientInstance.removeVolume("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotRemoveVolumeSinceBlankName(final String volumeName) {
+        assertThat(dockerClientInstance.removeVolume(volumeName)).isFalse();
     }
 
     @Test

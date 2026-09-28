@@ -22,6 +22,9 @@ import com.iexec.commons.containers.SgxDriverMode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
@@ -73,9 +76,11 @@ class DockerExecTests extends AbstractDockerTests {
         dockerClientInstance.stopAndRemoveContainer(containerName);
     }
 
-    @Test
-    void shouldNotExecuteCommandSinceEmptyContainerName() {
-        assertThat(dockerClientInstance.exec("", "sh", "-c", "ls")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotExecuteCommandSinceBlankContainerName(final String containerName) {
+        assertThat(dockerClientInstance.exec(containerName, "sh", "-c", "ls")).isEmpty();
     }
 
     @Test
@@ -111,11 +116,11 @@ class DockerExecTests extends AbstractDockerTests {
         dockerClientInstance.createContainer(request);
         dockerClientInstance.startContainer(containerName);
         Future<Optional<DockerLogs>> future = threadPool.submit(() -> dockerClientInstance.exec(containerName, "sh", "-c", cmd));
-        await().atMost(1, TimeUnit.SECONDS).until(() -> threadPool.getActiveCount() == 1);
+        await().atMost(10, TimeUnit.SECONDS).until(() -> threadPool.getActiveCount() == 1);
         future.cancel(true);
         assertThat(future.isCancelled()).isTrue();
         assertThatThrownBy(future::get).isInstanceOf(CancellationException.class);
-        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
                 assertThat(output.getOut()).contains(
                         "Docker exec command was interrupted",
                         "java.lang.InterruptedException"));

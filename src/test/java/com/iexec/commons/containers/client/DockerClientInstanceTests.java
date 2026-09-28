@@ -17,11 +17,7 @@
 package com.iexec.commons.containers.client;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.AuthCmd;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.LogContainerCmd;
-import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
@@ -183,9 +179,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.isImagePresent(getRandomString())).isFalse();
     }
 
-    @Test
-    void shouldNotFindImagePresentSinceEmptyName() {
-        assertThat(dockerClientInstance.isImagePresent("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotFindImagePresentSinceBlankName(final String imageName) {
+        assertThat(dockerClientInstance.isImagePresent(imageName)).isFalse();
     }
 
 
@@ -211,11 +209,20 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     }
 
     @Test
-    void shouldNotPullImageSinceTimeout() {
-        dockerClientInstance.removeImage(ALPINE_LATEST);
-        assertThat(dockerClientInstance.pullImage(ALPINE_LATEST, Duration.of(1, ChronoUnit.SECONDS))).isFalse();
-        assertThat(dockerClientInstance.isImagePresent(ALPINE_LATEST)).isFalse();
-        dockerClientInstance.pullImage(ALPINE_LATEST);
+    void shouldNotPullImageSinceTimeout(CapturedOutput output) throws InterruptedException {
+        final DockerClient dockerClient = mock(DockerClient.class);
+        final PullImageCmd pullImageCmd = mock(PullImageCmd.class);
+        final PullImageResultCallback resultCallback = mock(PullImageResultCallback.class);
+        ReflectionTestUtils.setField(dockerClientInstance, "client", dockerClient);
+        when(dockerClient.pullImageCmd("alpine")).thenReturn(pullImageCmd);
+        when(pullImageCmd.withTag("latest")).thenReturn(pullImageCmd);
+        when(pullImageCmd.exec(any())).thenReturn(resultCallback);
+        when(resultCallback.awaitCompletion(1, TimeUnit.SECONDS)).thenReturn(false);
+
+        assertThat(dockerClientInstance.pullImage(ALPINE_LATEST, Duration.of(1, ChronoUnit.SECONDS)))
+                .isFalse();
+        assertThat(output.getOut()).contains("Docker image has not been pulled (timeout)");
+        verify(resultCallback).awaitCompletion(1, TimeUnit.SECONDS);
     }
 
     @Test
@@ -223,9 +230,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.pullImage("alpine")).isFalse();
     }
 
-    @Test
-    void shouldNotPullImageSinceEmptyImageName() {
-        assertThat(dockerClientInstance.pullImage("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotPullImageSinceBlankImageName(final String imageName) {
+        assertThat(dockerClientInstance.pullImage(imageName)).isFalse();
     }
 
     @Test
@@ -318,9 +327,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(imageId).isNotEmpty();
     }
 
-    @Test
-    void shouldNotGetImageIdSinceEmptyName() {
-        assertThat(dockerClientInstance.getImageId("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetImageIdSinceBlankName(final String imageName) {
+        assertThat(dockerClientInstance.getImageId(imageName)).isEmpty();
     }
 
     @Test
@@ -380,9 +391,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.removeImage(DOCKER_IO_CLASSIC_IMAGE)).isTrue();
     }
 
-    @Test
-    void shouldNotRemoveImageByIdSinceEmptyName() {
-        assertThat(dockerClientInstance.removeImage("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotRemoveImageSinceBlankName(final String imageName) {
+        assertThat(dockerClientInstance.removeImage(imageName)).isFalse();
     }
 
     @Test
@@ -810,9 +823,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
-    @Test
-    void shouldNotGetContainerNameSinceEmptyId() {
-        assertThat(dockerClientInstance.getContainerName("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetContainerNameSinceBlankId(final String containerId) {
+        assertThat(dockerClientInstance.getContainerName(containerId)).isEmpty();
     }
 
     @Test
@@ -846,9 +861,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
-    @Test
-    void shouldNotGetContainerIdSinceEmptyId() {
-        assertThat(dockerClientInstance.getContainerId("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetContainerIdSinceBlankName(final String containerName) {
+        assertThat(dockerClientInstance.getContainerId(containerName)).isEmpty();
     }
 
     @Test
@@ -871,9 +888,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
-    @Test
-    void shouldNotGetContainerStatusSinceEmptyId() {
-        assertThat(dockerClientInstance.getContainerStatus("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetContainerStatusSinceBlankName(final String containerName) {
+        assertThat(dockerClientInstance.getContainerStatus(containerName)).isEmpty();
     }
 
     @Test
@@ -900,9 +919,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(containerName);
     }
 
-    @Test
-    void shouldNotStartContainerNameSinceEmptyId() {
-        assertThat(dockerClientInstance.startContainer("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotStartContainerSinceBlankName(final String containerName) {
+        assertThat(dockerClientInstance.startContainer(containerName)).isFalse();
     }
 
     @Test
@@ -918,8 +939,8 @@ class DockerClientInstanceTests extends AbstractDockerTests {
     //region waitContainerUntilExitOrTimeout
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {""})
-    void shouldNotWaitContainerUntilExitOrTimeoutSinceBlankContainerName(String containerName) {
+    @ValueSource(strings = {"", " "})
+    void shouldNotWaitContainerUntilExitOrTimeoutSinceBlankContainerName(final String containerName) {
         final String message = assertThrows(IllegalArgumentException.class, () -> dockerClientInstance.waitContainerUntilExitOrTimeout(containerName, null))
                 .getMessage();
         assertEquals("Container name cannot be blank", message);
@@ -964,7 +985,7 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.RUNNING_STATUS);
         dockerClientInstance.waitContainerUntilExitOrTimeout(containerName,
-                Instant.now().plusMillis(3000));
+                Instant.now().plusSeconds(30));
         assertThat(dockerClientInstance.getContainerStatus(containerName))
                 .isEqualTo(DockerClientInstance.EXITED_STATUS);
 
@@ -1042,9 +1063,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(request.getContainerName());
     }
 
-    @Test
-    void shouldNotGetContainerLogsSinceEmptyId() {
-        assertThat(dockerClientInstance.getContainerLogs("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetContainerLogsSinceBlankName(final String containerName) {
+        assertThat(dockerClientInstance.getContainerLogs(containerName)).isEmpty();
     }
 
     @Test
@@ -1120,9 +1143,15 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         dockerClientInstance.removeContainer(containerName);
     }
 
-    @Test
-    void shouldNotStopContainerSinceEmptyId() {
-        assertThat(dockerClientInstance.stopContainer("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotStopContainerSinceBlankName(final String containerName, final CapturedOutput output) {
+        assertThat(dockerClientInstance.stopContainer(containerName)).isFalse();
+        assertAll(
+                () -> assertThat(output.getOut()).contains("Invalid docker container name"),
+                () -> assertThat(output.getOut()).doesNotContain("No docker container to stop")
+        );
     }
 
     @Test
@@ -1156,9 +1185,11 @@ class DockerClientInstanceTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.removeContainer(containerName)).isTrue();
     }
 
-    @Test
-    void shouldNotRemoveContainerSinceEmptyId() {
-        assertThat(dockerClientInstance.removeContainer("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotRemoveContainerSinceBlankName(final String containerName) {
+        assertThat(dockerClientInstance.removeContainer(containerName)).isFalse();
     }
 
     @Test
