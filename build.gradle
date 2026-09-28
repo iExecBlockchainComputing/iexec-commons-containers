@@ -6,15 +6,10 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.iexec.commons'
+group = 'com.github.iExecBlockchainComputing'
 
 ext {
-    gitTag = 'git tag --points-at HEAD'.execute().text.trim()
-    dockerJavaVersion = '3.4.1'
-}
-
-if (gitTag.isEmpty()) {
-    version += '-NEXT-SNAPSHOT'
+    dockerJavaVersion = '3.4.2'
 }
 
 repositories {
@@ -26,7 +21,7 @@ repositories {
 // 'api' configuration allows to expose dependencies with 'compile' scope in pom
 // 'implementation' configuration allows to expose dependencies with 'runtime' scope in pom
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.8')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.16')
 
     // docker
     api "com.github.docker-java:docker-java:${dockerJavaVersion}"
@@ -35,7 +30,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-zerodep:${dockerJavaVersion}"
 
     // apache commons-lang3
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'org.apache.commons:commons-lang3'
 
     // args utils
     implementation 'org.apache.maven.shared:maven-shared-utils:3.4.2'

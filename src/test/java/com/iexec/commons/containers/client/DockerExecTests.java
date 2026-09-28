@@ -118,7 +118,7 @@ class DockerExecTests extends AbstractDockerTests {
         await().atMost(3, TimeUnit.SECONDS).untilAsserted(() ->
                 assertThat(output.getOut()).contains(
                         "Docker exec command was interrupted",
-                        "java.lang.InterruptedException: null"));
+                        "java.lang.InterruptedException"));
         dockerClientInstance.stopAndRemoveContainer(containerName);
     }
 
