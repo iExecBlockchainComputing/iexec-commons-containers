@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package com.iexec.commons.containers.client;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,9 +34,11 @@ class DockerNetworkTests extends AbstractDockerTests {
         dockerClientInstance.removeNetwork(networkName);
     }
 
-    @Test
-    void shouldNotCreateNetworkSinceEmptyName() {
-        assertThat(dockerClientInstance.createNetwork("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotCreateNetworkSinceBlankName(final String networkName) {
+        assertThat(dockerClientInstance.createNetwork(networkName)).isEmpty();
     }
 
     @Test
@@ -59,9 +64,11 @@ class DockerNetworkTests extends AbstractDockerTests {
         dockerClientInstance.removeNetwork(networkName);
     }
 
-    @Test
-    void shouldNotGetNetworkIdSinceEmptyName() {
-        assertThat(dockerClientInstance.getNetworkId("")).isEmpty();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotGetNetworkIdSinceBlankName(final String networkName) {
+        assertThat(dockerClientInstance.getNetworkId(networkName)).isEmpty();
     }
 
     @Test
@@ -79,9 +86,11 @@ class DockerNetworkTests extends AbstractDockerTests {
         dockerClientInstance.removeNetwork(networkName);
     }
 
-    @Test
-    void shouldNotFindNetworkPresentSinceEmptyName() {
-        assertThat(dockerClientInstance.isNetworkPresent("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotFindNetworkPresentSinceBlankName(final String networkName) {
+        assertThat(dockerClientInstance.isNetworkPresent(networkName)).isFalse();
     }
 
     @Test
@@ -100,9 +109,11 @@ class DockerNetworkTests extends AbstractDockerTests {
         assertThat(dockerClientInstance.isNetworkPresent(networkName)).isFalse();
     }
 
-    @Test
-    void shouldNotRemoveNetworkSinceEmptyId() {
-        assertThat(dockerClientInstance.removeNetwork("")).isFalse();
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", " "})
+    void shouldNotRemoveNetworkSinceBlankName(final String networkName) {
+        assertThat(dockerClientInstance.removeNetwork(networkName)).isFalse();
     }
 
     @Test

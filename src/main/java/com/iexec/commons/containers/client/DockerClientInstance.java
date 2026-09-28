@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 IEXEC BLOCKCHAIN TECH
+ * Copyright 2023-2026 IEXEC BLOCKCHAIN TECH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class DockerClientInstance {
@@ -147,7 +146,7 @@ public class DockerClientInstance {
                     .getVolumes();
             List<InspectVolumeResponse> filtered = volumes.stream()
                     .filter(volume -> volumeName.equals(volume.getName()))
-                    .collect(Collectors.toList());
+                    .toList();
             return filtered.stream().findFirst();
         } catch (Exception e) {
             log.error("Error getting docker volume [name:{}]", volumeName, e);
@@ -592,7 +591,7 @@ public class DockerClientInstance {
 
     public String getContainerId(String containerName) {
         if (StringUtils.isBlank(containerName)) {
-            log.error("Invalid docker container name [name:{}]", containerName);
+            logInvalidContainerNameError(containerName);
             return "";
         }
         try (ListContainersCmd listContainersCmd = getClient().listContainersCmd()) {
@@ -701,7 +700,7 @@ public class DockerClientInstance {
 
     public Optional<DockerLogs> getContainerLogs(String containerName) {
         if (StringUtils.isBlank(containerName)) {
-            log.error("Invalid docker container name [name:{}]", containerName);
+            logInvalidContainerNameError(containerName);
             return Optional.empty();
         }
         if (!isContainerPresent(containerName)) {
@@ -737,8 +736,8 @@ public class DockerClientInstance {
      * is not "running" or "restarting", false otherwise.
      */
     public synchronized boolean stopContainer(String containerName) {
-        if (StringUtils.isEmpty(containerName)) {
-            log.info("Invalid docker container name [name:{}]", containerName);
+        if (StringUtils.isBlank(containerName)) {
+            logInvalidContainerNameError(containerName);
             return false;
         }
         try (StopContainerCmd stopContainerCmd = client.stopContainerCmd(containerName)) {
@@ -760,7 +759,7 @@ public class DockerClientInstance {
 
     public synchronized boolean removeContainer(String containerName) {
         if (StringUtils.isBlank(containerName)) {
-            log.error("Invalid docker container name [name:{}]", containerName);
+            logInvalidContainerNameError(containerName);
             return false;
         }
         try (RemoveContainerCmd removeContainerCmd = client.removeContainerCmd(containerName)) {
@@ -823,7 +822,9 @@ public class DockerClientInstance {
         return Optional.of(duration);
     }
 
-
+    private void logInvalidContainerNameError(final String containerName) {
+        log.error("Invalid docker container name [name:{}]", containerName);
+    }
     //endregion
 
     //region exec
